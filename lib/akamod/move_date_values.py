@@ -26,13 +26,15 @@ def movedatevalues(body, ctype, action="move_date_values", prop=None,
         "\d{4}\s*[-/]\s*\d{4}",
         "\d{1,2}\s*[-/]\s*\d{4}",
         "\d{4}\s*[-/]\s*\d{1,2}",
-        "\d{4}s?",
-        "\d{1,2}\s*(?:st|nd|rd|th)\s*century"
+        "\d{4}s?"
         ]
 
     def cleanup(s):
         s = re.sub("[\(\)\.\?]", "",s)
         return s.strip()
+
+    def is_century(s):
+        return re.search("century", s, re.I)
 
     try:
         data = json.loads(body)
@@ -47,6 +49,11 @@ def movedatevalues(body, ctype, action="move_date_values", prop=None,
         toprop = getprop(data, to_prop) if exists(data, to_prop) else []
         
         for v in (values if isinstance(values, list) else [values]):
+            if is_century(v):
+                toprop.append(v)
+                remove.append(v)
+                continue
+
             c = cleanup(v)
             for pattern in REGSEARCH:
                 m = re.compile(pattern, re.I).findall(c)

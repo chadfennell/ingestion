@@ -137,6 +137,7 @@ def test_move_date_values_subject1():
                 "2nd Century",
                 "1stcentury",
                 "3rdCentury",
+                "Roman, 2nd century A.D.",
                 "United States--History--Civil War, 1861-1865--Soldiers--Pictorial works.",
                 "subject1"
             ]
@@ -154,6 +155,7 @@ def test_move_date_values_subject1():
                 "2nd Century",
                 "1stcentury",
                 "3rdCentury",
+                "Roman, 2nd century A.D."
             ],
             "subject" : [
                 "United States--History--Civil War, 1861-1865--Soldiers--Pictorial works.",
