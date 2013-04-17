@@ -14,6 +14,7 @@ from multiprocessing.dummy import Pool
 from Queue import Full, Empty, Queue
 from threading import Lock
 import signal
+import re
 
 try:
     from collections import OrderedDict, Counter
@@ -34,6 +35,7 @@ ENRICH = "/enrich" # enrichment service URI
 H = httplib2.Http('/tmp/.pollcache')
 H.force_exception_as_status_code = True
 
+resumption_token_search = re.compile('.*[\'\"]resumption_token[\'\"]:\s[\'\"](?P<token>.*?)[\'\"]', re.S)
 
 def process_profile(uri_base, profile_f):
     global URI_BASE, ENRICH
@@ -93,7 +95,12 @@ def process_primo_all(profile, blacklist=None):
             print >> sys.stderr, ' HTTP error (%s) resolving URL: %s' % (resp[u'status'], endpoint)
             request_more = False
 
-        endpoint_content = ARC_PARSE(content)
+        try:
+            endpoint_content = ARC_PARSE(content)
+        except:
+            print >> sys.stderr, " Error parsing data from %s" % endpoint
+            index += int(profile[u'bulk_size'])
+            continue
         total_hits = endpoint_content['SEGMENTS']['JAGROOT']['RESULT']['DOCSET']['TOTALHITS']
         print >> sys.stderr, "%s of %s total documents" % (index, total_hits)
         items = endpoint_content['SEGMENTS']['JAGROOT']['RESULT']['DOCSET']['DOC']
@@ -132,7 +139,12 @@ def process_arc_all(profile, blacklist=None):
         for filename in fnmatch.filter(files, 'Item_*.xml'):
             item_fn = os.path.join(root, filename)
             item_f = open(item_fn, 'r')
-            item = ARC_PARSE(item_f)['archival-description']
+            try:
+                item = ARC_PARSE(item_f)['archival-description']
+            except:
+                print >> sys.stderr, " Error parsing data from %s" % item_fn
+                item_f.close()
+                continue
             item_f.close()
 
             # set our generic identifier property
@@ -214,6 +226,12 @@ def process_oai_rec(profile):
         print >> sys.stderr, '  HTTP error (' + resp[u'status'] + ') resolving URL: ' + endpoint
         return False
 
+    try:
+        json.loads(content)
+    except:
+        print >> sys.stderr, " Error parsing data from %s" % endpoint
+        return False
+
     subr = profile[u'name']
     enrich_coll(profile, subr, content)
 
@@ -242,11 +260,21 @@ def process_oai_coll(profile, subr):
         if not resp[u'status'].startswith('2'):
             print >> sys.stderr, '  HTTP error (' + resp[u'status'] + ') resolving URL: ' + endpoint
             continue
-        endpoint_content = json.loads(content)
-        resumption_token = endpoint_content['resumption_token']
-
-        content = json.dumps(endpoint_content)
-        enrich_coll(profile, subr, content)
+        try:
+            endpoint_content = json.loads(content)
+            #resumption_token = endpoint_content['resumption_token']
+            # Test
+            match = resumption_token_search.match(str(content))
+            if match:
+                resumption_token = match.group("token")
+            # End Test
+            content = json.dumps(endpoint_content)
+            enrich_coll(profile, subr, content)
+        except:
+            print >> sys.stderr, " Error parsing data from %s" % endpoint
+            # Retrive resumptionToken by other means
+            match = resumption_token_search.match(str(content))
+            resumption_token = match.group("token") if match else None
 
         request_more = resumption_token is not None and len(resumption_token) > 0
 
