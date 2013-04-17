@@ -35,8 +35,6 @@ ENRICH = "/enrich" # enrichment service URI
 H = httplib2.Http('/tmp/.pollcache')
 H.force_exception_as_status_code = True
 
-resumption_token_search = re.compile('.*[\'\"]resumption_token[\'\"]:\s[\'\"](?P<token>.*?)[\'\"]', re.S)
-
 def process_profile(uri_base, profile_f):
     global URI_BASE, ENRICH
 
@@ -99,6 +97,8 @@ def process_primo_all(profile, blacklist=None):
             endpoint_content = ARC_PARSE(content)
         except:
             print >> sys.stderr, " Error parsing data from %s" % endpoint
+            # If XML parsing fails, continue with the next set of data by adding
+            # the bulk_size to the index
             index += int(profile[u'bulk_size'])
             continue
         total_hits = endpoint_content['SEGMENTS']['JAGROOT']['RESULT']['DOCSET']['TOTALHITS']
@@ -143,6 +143,7 @@ def process_arc_all(profile, blacklist=None):
                 item = ARC_PARSE(item_f)['archival-description']
             except:
                 print >> sys.stderr, " Error parsing data from %s" % item_fn
+                # If XML parsing fails, close the file and continue to the next one
                 item_f.close()
                 continue
             item_f.close()
@@ -235,6 +236,8 @@ def process_oai_rec(profile):
     subr = profile[u'name']
     enrich_coll(profile, subr, content)
 
+# Regex for extracting resumptionToken from content if json.loads(content) fails
+resumption_token_search = re.compile('.*[\'\"]resumption_token[\'\"]:\s[\'\"](?P<token>.*?)[\'\"]', re.S)
 
 def process_oai_coll(profile, subr):
     # For now, a simplifying assumption that string concatenation produces a
@@ -262,12 +265,7 @@ def process_oai_coll(profile, subr):
             continue
         try:
             endpoint_content = json.loads(content)
-            #resumption_token = endpoint_content['resumption_token']
-            # Test
-            match = resumption_token_search.match(str(content))
-            if match:
-                resumption_token = match.group("token")
-            # End Test
+            resumption_token = endpoint_content['resumption_token']
             content = json.dumps(endpoint_content)
             enrich_coll(profile, subr, content)
         except:
@@ -446,7 +444,11 @@ def process_mets_coll(profile, subr):
         if not resp[u'status'].startswith('2'):
             print >> sys.stderr, ' HTTP error (%s) resolving URL: %s' % (resp[u'status'], endpoint)
             return
-        endpoint_content = ARC_PARSE(content)
+        try:
+            endpoint_content = ARC_PARSE(content)
+        except:
+            print >> sys.stderr, " Error parsing data from %s" % document_list_uri
+            return
         for d in endpoint_content["mets:mets"]:
             if "mets:dmdSec" in d:
                 records = endpoint_content["mets:mets"][d]
@@ -483,6 +485,9 @@ def process_mets_coll(profile, subr):
         enrich_coll(profile, subr, json.dumps({"items": items, "title": subr}))
         print >> sys.stderr, "%d documents processed" % total_count
 
+# Regex for extracting page and totalPages from NYPL content if XML parsing fails
+page_search = re.compile('.*<page>(?P<page>\d+)<', re.S)
+total_pages_search = re.compile('.*<totalPages>(?P<totalPages>\d+)<', re.S)
 
 def process_nypl_coll(profile, subr):
     endpoint = profile[u'endpoint_URL'].format(subr)
@@ -499,7 +504,22 @@ def process_nypl_coll(profile, subr):
         if not resp[u'status'].startswith('2'):
             print >> sys.stderr, ' HTTP error (%s) resolving URL: %s' % (resp[u'status'], endpoint)
             return False
-        response_dict = ARC_PARSE(content)["nyplAPI"]
+        try:
+            response_dict = ARC_PARSE(content)["nyplAPI"]
+        except:
+            print >> sys.stderr, " Error parsing data from %s" % request_url
+            page_match = page_search.match(str(content))
+            total_pages_match = total_pages_search.match(str(content))
+            if page_match and total_pages_match:
+                total_pages = total_pages_match.group("totalPages")
+                current_page = page_match.group("page")
+                done = total_pages == current_page
+                page += 1
+                continue
+            else:
+                print >> sys.stderr, ' XML at %s is missing <page>/<totalPages>' % request_url
+                return False
+            
         success = response_dict["response"]["headers"]["code"] == "200"
         if success:
             total_pages = response_dict["request"]["totalPages"]
@@ -555,6 +575,9 @@ def process_nypl_all(profile, blacklist=tuple()):
         process_nypl_coll(profile, subr)
         time.sleep(sleep)
 
+# Regex to extract numFound and start if json.loads(content) fails for IA
+num_found_search = re.compile('.*[\'\"]numfound[\'\"]:(?P<numFound>\d+),', re.S)
+start_search = re.compile('.*[\'\"]start[\'\"]:(?P<start>\d+),', re.S)
 
 def process_ia_coll(profile, subr):
     def _stophandler(signum, frame):
@@ -583,7 +606,11 @@ def process_ia_coll(profile, subr):
             err_text = ' HTTP error (%s) resolving URL: %s' % (resp[u'status'], request_url)
             print >> sys.stderr, err_text
             raise Exception(err_text)
-        parsed = json.loads(content)
+        try:
+            parsed = json.loads(content)
+        except:
+            print >> sys.stderr, " Error parsing data from %s" % request_url
+            return str(content)
         response_key = "response"
         if response_key in parsed:
             return parsed[response_key]
@@ -645,10 +672,24 @@ def process_ia_coll(profile, subr):
         args["page"] = page
         request_url = endpoint + "&" + urlencode(args)
         response_dict = get_docs_list(request_url)
-        total_docs = int(response_dict["numFound"])
-        read_docs = int(response_dict["start"])
-        done = (total_docs - read_docs) < args["rows"]
-        page += 1
+        if isinstance(response_dict, basestring):
+            # Error loading JSON. Get total_docs and read_docs through regex
+            num_found_match = num_found_search.match(response_dict)
+            start_match = start_search.match(response_dict)
+            if num_found_match and start_match:
+                total_docs = int(num_found_match.group("numFound"))
+                read_docs = int(start_match.group("start"))
+                done = (total_docs - read_docs) < args["rows"]
+                page += 1
+                continue
+            else:
+                print >> sys.stderr, ' XML at %s is missing <page>/<totalPages>' % request_url
+                return False
+        else:
+            total_docs = int(response_dict["numFound"])
+            read_docs = int(response_dict["start"])
+            done = (total_docs - read_docs) < args["rows"]
+            page += 1
         for item_dict in response_dict["docs"]:
             identifier = item_dict["identifier"]
             pool.apply_async(run_task, args=(FetchDocumentTask(identifier, subr, profile),), callback=task_done)
