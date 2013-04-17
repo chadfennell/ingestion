@@ -683,7 +683,7 @@ def process_ia_coll(profile, subr):
                 page += 1
                 continue
             else:
-                print >> sys.stderr, ' XML at %s is missing <page>/<totalPages>' % request_url
+                print >> sys.stderr, ' XML at %s is missing numFound/start' % request_url
                 return False
         else:
             total_docs = int(response_dict["numFound"])
