@@ -185,24 +185,6 @@ def remove_brackets_and_strip(d):
     return re.sub(r"(^\s*\[\s*|\s*\]\s*$)", '', d).strip()
 
 
-def test_parse_date_or_range():
-    DATE_TESTS = {
-        "ca. July 1896": ("1896-07", "1896-07"), # fuzzy dates
-        "c. 1896": ("1896", "1896"), # fuzzy dates
-        "c. 1890-95": ("1890", "1895"), # fuzzy date range
-        "1999.11.01": ("1999-11-01", "1999-11-01"), # period delim
-        "2012-02-31": ("2012-03-02", "2012-03-02"), # invalid date cleanup
-        "12-19-2010": ("2010-12-19", "2010-12-19"), # M-D-Y
-        "5/7/2012": ("2012-05-07", "2012-05-07"), # slash delim MDY
-        "1999 - 2004": ("1999", "2004"), # year range
-        "1999-2004": ("1999", "2004"), # year range without spaces
-        " 1999 - 2004 ": ("1999", "2004"), # range whitespace
-    }
-    for i in DATE_TESTS:
-        i = clean_date(i)
-        res = parse_date_or_range(i)
-        assert res == DATE_TESTS[i], "For input '%s', expected '%s' but got '%s'"%(i,DATE_TESTS[i],res)
-
 def clean_date(d):
     regex = [("to", "-"), ("[\?\(\)]|\s|ca\.?", "")]
     if not "circa" in d and not "century" in d:

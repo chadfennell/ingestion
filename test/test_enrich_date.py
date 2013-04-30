@@ -682,5 +682,38 @@ def test_wordy_date():
     assert str(resp.status).startswith("2")
     assert_same_jsons(EXPECTED, content)
 
+
+# Test moved from lib/akamod/enrich-date.py
+#
+# This is an ugly workaround.
+# We have to rename the enrich-date.py to enrich_date.py to
+# have nice code like:
+# from dplaingestion.akamod.enrich_date import clean_date
+#
+# Test moved from .py
+import imp
+fp, pathname, description = imp.find_module("dplaingestion/akamod/enrich-date")
+ed = imp.load_module("enrich-date", fp, pathname, description)
+
+
+def test_parse_date_or_range():
+    DATE_TESTS = {
+        "ca. July 1896": ("1896-07",    "1896-07"), # fuzzy dates
+        "c. 1896":       ("1896",       "1896"), # fuzzy dates
+        "c. 1890-95":    ("1890",       "1895"), # fuzzy date range
+        "1999.11.01":    ("1999-11-01", "1999-11-01"), # period delim
+        "2012-02-31":    ("2012-03-02", "2012-03-02"), # invalid date cleanup
+        "12-19-2010":    ("2010-12-19", "2010-12-19"), # M-D-Y
+        "5/7/2012":      ("2012-05-07", "2012-05-07"), # slash delim MDY
+        "1999 - 2004":   ("1999",       "2004"), # year range
+        "1999-2004":     ("1999",       "2004"), # year range without spaces
+        " 1999 - 2004 ": ("1999",       "2004"), # range whitespace
+    }
+    for key in DATE_TESTS:
+        i = ed.clean_date(key)
+        res = ed.parse_date_or_range(i)
+        assert res == DATE_TESTS[key], "For input '%s', expected '%s' but got '%s'" % (i, DATE_TESTS[key], res)
+
+
 if __name__ == "__main__":
     raise SystemExit("Use nosetests")
