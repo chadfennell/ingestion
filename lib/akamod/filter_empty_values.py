@@ -124,11 +124,6 @@ def filter_path(_dict, path):
         else:
             return filter_dict(dict_to_clean, filter_fields, embracing_path)
 
-def test_filtering():
-    source = {"v1": "", "v2": "value2", "v3": {"vv1": "", "vv2": "v_value2"}, "v4": {}, "v5": {"0": {"name": ""}, "1": {"name": "name_value_1"}}, "v6": ["", "vvalue6", {}, {"v_sub": ""}], "v7": [""]}
-    expected = {"v2": "value2", "v3": {"vv2": "v_value2"}, "v5": {"1": {"name": "name_value_1"}}, "v6": ["vvalue6"]}
-    filtered = filter_dict(copy.deepcopy(source), filter_empty_leaves)
-    assert expected == filtered, "Expected dictionary does not equal to filtered"
 
 @simple_service('POST', 'http://purl.org/la/dp/filter_empty_values', 'filter_empty_values', HTTP_TYPE_JSON)
 def filter_empty_values_endpoint(body, ctype, ignore_key="originalRecord"):

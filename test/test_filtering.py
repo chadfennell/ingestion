@@ -1,7 +1,8 @@
 from server_support import server, H
 from amara.thirdparty import json
 from nose.tools import nottest
-
+from dplaingestion.akamod.filter_empty_values import filter_dict, filter_empty_leaves
+from dplaingestion.selector import copy
 
 def test_full_filtering():
     """
@@ -690,6 +691,13 @@ def test_single_step_path_filtering():
     assert str(resp.status).startswith("2"), content
     FETCHED = json.loads(content)
     assert FETCHED == EXPECTED, "%s != %s" % (FETCHED, EXPECTED)
+
+
+def test_filtering():
+    source = {"v1": "", "v2": "value2", "v3": {"vv1": "", "vv2": "v_value2"}, "v4": {}, "v5": {"0": {"name": ""}, "1": {"name": "name_value_1"}}, "v6": ["", "vvalue6", {}, {"v_sub": ""}], "v7": [""]}
+    expected = {"v2": "value2", "v3": {"vv2": "v_value2"}, "v5": {"1": {"name": "name_value_1"}}, "v6": ["vvalue6"]}
+    filtered = filter_dict(copy.deepcopy(source), filter_empty_leaves)
+    assert expected == filtered, "Expected dictionary does not equal to filtered"
 
 
 if __name__ == "__main__":
