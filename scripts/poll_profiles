@@ -204,18 +204,24 @@ def enrich_coll(profile, subr, content):
 
 
 def process_oai_rec(profile):
-    endpoint = profile[u'get_record']
-    if not is_absolute(endpoint):
-        endpoint = URI_BASE + endpoint
-    print >> sys.stderr, endpoint
-
-    resp, content = H.request(endpoint)
-    if not str(resp.status).startswith('2'):
-        print >> sys.stderr, '  HTTP error (' + resp[u'status'] + ') resolving URL: ' + endpoint
+    if ('url' not in profile[u'get_record'] or 'identifiers' not in
+        profile[u'get_record']):
+        print >> sys.stderr, "Missing 'url' and/or 'identifiers' from profile['get_record']"
         return False
+    url = profile[u'get_record'][u'url']
+    for id in profile[u'get_record'][u'identifiers']:
+        endpoint = url + id
+        if not is_absolute(endpoint):
+            endpoint = URI_BASE + endpoint
+        print >> sys.stderr, endpoint
 
-    subr = profile[u'name']
-    enrich_coll(profile, subr, content)
+        resp, content = H.request(endpoint)
+        if not str(resp.status).startswith('2'):
+            print >> sys.stderr, '  HTTP error (' + resp[u'status'] + ') resolving URL: ' + endpoint
+            return False
+
+        subr = profile[u'name']
+        enrich_coll(profile, subr, content)
 
 
 def process_oai_coll(profile, subr):
