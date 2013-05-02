@@ -110,7 +110,7 @@ MODULES = [
     "freemix_akara.contentdm",
     "freemix_akara.oai",
     "dplaingestion.oai",
-    "zen.akamod.geocoding",
+    "dplaingestion.audit_logger",
     "dplaingestion.akamod.enrich",
     "dplaingestion.akamod.enrich-subject",
     "dplaingestion.akamod.enrich-type",

@@ -9,6 +9,7 @@ import datetime
 import uuid
 import base64
 import hashlib
+from dplaingestion.audit_logger import audit_logger
 
 COUCH_DATABASE = module_config().get('couch_database')
 COUCH_DATABASE_USERNAME = module_config().get('couch_database_username')
@@ -46,7 +47,7 @@ def pipe(content, ctype, enrichments, wsgi_header):
         logger.debug("Calling url: %s " % uri)
         resp, cont = H.request(uri, 'POST', body=body, headers=headers)
         if not str(resp.status).startswith('2'):
-            logger.warn("Error in enrichment pipeline at %s: %s"%(uri,repr(resp)))
+            audit_logger.error("Error in enrichment pipeline at %s: %s" % (uri,repr(resp)))
             continue
 
         body = cont
@@ -108,7 +109,6 @@ def couch_rev_check_recs(docs):
     docs_ids = sorted(docs)
     start = docs_ids[0]
     end = docs_ids[-1:][0]
-#    uri += "?" + urlencode({"startkey": start, "endkey": end})
     uri += '?startkey="%s"&endkey="%s"' % (quote_plus(start), quote_plus(end))
     response, content = H.request(uri, 'GET', headers=COUCH_AUTH_HEADER)
     if str(response.status).startswith('2'):
@@ -117,8 +117,8 @@ def couch_rev_check_recs(docs):
             if r["id"] in docs:
                 docs[r["id"]]["_rev"] = r["value"]["rev"]
     else:
-        logger.warn('Unable to retrieve document revisions via bulk interface: ' + repr(response))
-        logger.warn('Request: ' + uri)
+        audit_logger.error('Failed request: ' + uri)
+        audit_logger.error('Unable to retrieve document revisions via bulk interface: ' + repr(response))
 
 def set_ingested_date(doc):
     doc[u'ingestDate'] = datetime.datetime.now().isoformat()
@@ -146,9 +146,18 @@ def enrich_coll(ctype, source_name, collection_name, collection_title, coll_enri
             body=json.dumps(enriched_collection),
             headers=dict(CT_JSON.items() + COUCH_AUTH_HEADER.items()))
         if not str(resp.status).startswith('2'):
-            logger.warn("Error storing collection in Couch: "+repr((resp,cont)))
+            audit_logger.error("Error storing collection in Couch: " + repr((resp,cont)))
 
     return enriched_collection
+
+def _couch_bulk_post(database, body, headers):
+    resp, content = H.request(join(database,'_bulk_docs'), 'POST', body=body, headers=headers)
+    if not str(resp.status).startswith('2'):
+        audit_logger.error('HTTP error posting to CouchDB: ' + repr((resp,content)))
+        audit_logger.error('First record identifier in failed bulk post: %s' %
+                           docs.values()[0]['originalRecord']['id'])
+    else:
+        audit_logger.debug("Couch bulk update response: " + content)
 
 @simple_service('POST', 'http://purl.org/la/dp/enrich', 'enrich', 'application/json')
 def enrich(body, ctype):
@@ -173,7 +182,7 @@ def enrich(body, ctype):
 
     # For non-OAI, the collection title is included as part of the data,
     # so we extract it here to pass it to def enrich_coll a few lines down.
-    # For OAI, the collection enrichment pipeline with set the title and so
+    # For OAI, the collection enrichment pipeline will set the title and so
     # None will be overridden. 
     collection_title = data.get("title", None)
 
@@ -209,16 +218,14 @@ def enrich(body, ctype):
         # After pipe doc must have _id
         if doc.get("_id", None):
             docs[doc["_id"]] = doc
+        else:
+            audit_logger.error("The following record is hasn no_id field: %s" % doc)
 
     couch_rev_check_recs(docs)
     couch_docs_text = json.dumps({"docs": docs.values()})
     if COUCH_DATABASE:
-        resp, content = H.request(join(COUCH_DATABASE,'_bulk_docs'), 'POST',
-            body=couch_docs_text,
-            headers=dict(CT_JSON.items() + COUCH_AUTH_HEADER.items()))
-        logger.debug("Couch bulk update response: "+content)
-        if not str(resp.status).startswith('2'):
-            logger.warn('HTTP error posting to CouchDB: '+repr((resp,content)))
+        _couch_bulk_post(COUCH_DATABASE, couch_docs_text,
+                         dict(CT_JSON.items() + COUCH_AUTH_HEADER.items()))
 
     return couch_docs_text
 
@@ -244,11 +251,7 @@ def enrich_storage(body, ctype):
     couch_rev_check_recs(docs)
     couch_docs_text = json.dumps({"docs": docs.values()})
     if COUCH_DATABASE:
-        resp, content = H.request(join(COUCH_DATABASE, '_bulk_docs'), 'POST',
-            body=couch_docs_text,
-            headers=dict(CT_JSON.items() + COUCH_AUTH_HEADER.items()))
-        logger.debug("Couch bulk update response: "+content)
-        if not str(resp.status).startswith('2'):
-            logger.warn('HTTP error posting to CouchDB: ' + repr((resp, content)))
+        _couch_bulk_post(COUCH_DATABASE, couch_docs_text,
+                         dict(CT_JSON.items() + COUCH_AUTH_HEADER.items()))
 
     return couch_docs_text
