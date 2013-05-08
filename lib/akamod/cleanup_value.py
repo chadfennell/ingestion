@@ -4,6 +4,7 @@ from akara.services import simple_service
 from amara.thirdparty import json
 from dplaingestion.selector import getprop, setprop, exists
 import re
+from dplaingestion.audit_logger import audit_logger
 
 
 def convert(data, prop):
@@ -115,7 +116,8 @@ def cleanup_value(body, ctype, action="cleanup_value", prop=",".join(DEFAULT_PRO
 
     try:
         data = json.loads(body)
-    except:
+    except Exception as e:
+        audit_logger.error("Bad JSON in %s: %s" % (__name__, e.args[0]))
         response.code = 500
         response.add_header('content-type', 'text/plain')
         return "Unable to parse body as JSON"

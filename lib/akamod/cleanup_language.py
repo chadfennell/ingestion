@@ -8,6 +8,7 @@ from dplaingestion.iso639_3 import ISO639_3_1
 from dplaingestion.iso639_3 import LANGUAGE_NAME_REGEXES
 from dplaingestion.iso639_1 import ISO639_1
 import re
+from dplaingestion.audit_logger import audit_logger
 
 @simple_service("POST", "http://purl.org/la/dp/cleanup_language",
                 "cleanup_language", "application/json")
@@ -28,7 +29,8 @@ def cleanup_language(body, ctype, action="cleanup_language",
 
     try:
         data = json.loads(body)
-    except:
+    except Exception as e:
+        audit_logger.error("Bad JSON in %s: %s" % (__name__, e.args[0]))
         response.code = 500
         response.add_header("content-type", "text/plain")
         return "Unable to parse body as JSON"

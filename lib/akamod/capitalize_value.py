@@ -4,7 +4,7 @@ from akara.services import simple_service
 from amara.thirdparty import json
 
 from dplaingestion.selector import getprop, setprop, exists
-
+from dplaingestion.audit_logger import audit_logger
 
 # Below fields should have removed do at the end.
 DEFAULT_PROP = [
@@ -66,13 +66,14 @@ def capitalize_value(body, ctype, prop=",".join(DEFAULT_PROP)):
     if prop is None:
         response.code = 500
         response.add_header('content-type', 'text/plain')
-        msg = "Prop param is None"
-        logger.error(msg)
+        msg = "No prop supplied in %s" % __name__
+        audit_logger.error(msg)
         return msg
 
     try:
         data = json.loads(body)
     except Exception as e:
+        audit_logger.error("Bad JSON in %s: %s" % (__name__, e.args[0]))
         response.code = 500
         response.add_header('content-type', 'text/plain')
         return "Unable to parse body as JSON\n" + str(e)

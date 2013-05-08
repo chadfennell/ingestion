@@ -5,6 +5,7 @@ from amara.thirdparty import json
 from dplaingestion.selector import getprop, setprop, exists
 from akara import module_config
 from amara.lib.iri import is_absolute
+from dplaingestion.audit_logger import audit_logger
 
 IGNORE = module_config().get('IGNORE')
 PENDING = module_config().get('PENDING')
@@ -17,21 +18,13 @@ def contentdm_identify_object(body, ctype, download="True"):
     should expect to the find the thumbnail
     """
 
-    LOG_JSON_ON_ERROR = True
-
-    def log_json():
-        if LOG_JSON_ON_ERROR:
-            logger.debug(body)
-
-    data = {}
     try:
         data = json.loads(body)
     except Exception as e:
-        msg = "Bad JSON: " + e.args[0]
-        logger.error(msg)
+        audit_logger.error("Bad JSON in %s: %s" % (__name__, e.args[0]))
         response.code = 500
         response.add_header('content-type', 'text/plain')
-        return msg
+        return "Unable to parse body as JSON"
 
     handle_field = "originalRecord/handle"
     if exists(data, handle_field):
@@ -42,33 +35,29 @@ def contentdm_identify_object(body, ctype, download="True"):
                 url = h
                 break
         if not url:
-            logger.error("There is no URL in %s." % handle_field)
+            audit_logger.error("There is no URL in %s for doc [%s]" % (handle_field, data["_id"]))
             return body
     else:
-        msg = "Field %s does not exist" % handle_field
-        logger.error(msg)
+        audit_logger("Field %s does not exist for doc [%s]" % (handle_field, data["_id"]))
         return body
 
     p = url.split("u?")
 
     if len(p) != 2:
-        logger.error("Bad URL %s. It should have just one 'u?' part." % url)
-        log_json()
+        audit_logger.error("Bad URL %s in doc [%s]. It should have just one 'u?' part." % (data["_id"], url))
         return body
 
     (base_url, rest) = p
 
     if base_url == "" or rest == "":
-        logger.error("Bad URL: %s. There is no 'u?' part." % url)
-        log_json()
+        audit_logger.error("Bad URL: %s in doc[%s]. There is no 'u?' part." % (data["_id"], url))
         return body
 
     p = rest.split(",")
 
     if len(p) != 2:
-        logger.error("Bad URL %s. Expected two parts at the end, used in " +
-            "thumbnail URL for CISOROOT and CISOPTR." % url)
-        log_json()
+        audit_logger.error("Bad URL %s in doc [%s]. Expected two parts at the end, used in " +
+            "thumbnail URL for CISOROOT and CISOPTR." % (data["_id"], url))
         return body
 
     # Thumb url field.

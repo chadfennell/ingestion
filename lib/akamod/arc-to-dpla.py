@@ -9,6 +9,7 @@ import sys
 import re
 from copy import deepcopy
 from dplaingestion.selector import getprop, setprop, exists
+from dplaingestion.audit_logger import audit_logger
 
 GEOPROP = None
 
@@ -324,7 +325,7 @@ def arctodpla(body,ctype,geoprop=None):
     out["sourceResource"].update(transform_state_located_in(data))
 
     if exists(out, "sourceResource/date"):
-        logger.debug("OUTTYPE: %s"%getprop(out, "sourceResource/date"))
+        audit_logger.debug("OUTTYPE: %s"%getprop(out, "sourceResource/date"))
 
     if exists(data, "objects/object"):
         out.update(transform_thumbnail(data))
@@ -334,7 +335,7 @@ def arctodpla(body,ctype,geoprop=None):
         try:
             out["provider"] = json.loads(base64.b64decode(request.environ["HTTP_CONTRIBUTOR"]))
         except Exception as e:
-            logger.debug("Unable to decode Contributor header value: "+request.environ["HTTP_CONTRIBUTOR"]+"---"+repr(e))
+            audit_logger.debug("Unable to decode Contributor header value: "+request.environ["HTTP_CONTRIBUTOR"]+"---"+repr(e))
 
     # Strip out keys with None/null values?
     out = dict((k,v) for (k,v) in out.items() if v)

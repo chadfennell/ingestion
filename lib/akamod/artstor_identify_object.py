@@ -13,6 +13,7 @@ from amara.thirdparty import json
 from akara import module_config
 
 from dplaingestion import selector
+from dplaingestion.audit_logger import audit_logger
 
 
 IGNORE = module_config().get('IGNORE')
@@ -31,8 +32,7 @@ def artstor_identify_object(body, ctype, download="True"):
         assert ctype.lower() == HTTP_TYPE_JSON, "%s is not %s" % (HTTP_HEADER_TYPE, HTTP_TYPE_JSON)
         data = json.loads(body)
     except Exception as e:
-        error_text = "Bad JSON: %s: %s" % (e.__class__.__name__, str(e))
-        logger.exception(error_text)
+        audit_logger.error("Bad JSON in %s: %s" % (__name__, e.args[0]))
         response.code = HTTP_INTERNAL_SERVER_ERROR
         response.add_header(HTTP_HEADER_TYPE, HTTP_TYPE_TEXT)
         return error_text
@@ -42,11 +42,11 @@ def artstor_identify_object(body, ctype, download="True"):
     artstor_preview_prefix = "/size2/"
 
     if original_document_key not in data:
-        logger.error("There is no '%s' key in JSON for doc [%s].", original_document_key, data[u'id'])
+        audit_logger.error("There is no '%s' key in JSON for doc [%s].", original_document_key, data[u'id'])
         return body
 
     if original_sources_key not in data[original_document_key]:
-        logger.error("There is no '%s/%s' key in JSON for doc [%s].", original_document_key, original_sources_key, data[u'id'])
+        audit_logger.error("There is no '%s/%s' key in JSON for doc [%s].", original_document_key, original_sources_key, data[u'id'])
         return body
 
     preview_url = None
@@ -59,7 +59,7 @@ def artstor_identify_object(body, ctype, download="True"):
                 break
 
     if not preview_url:
-        logger.error("Can't find url with '%s' prefix in [%s] for fetching document preview url for Artstor.", artstor_preview_prefix, data[original_document_key][original_sources_key])
+        audit_logger.error("Can't find url with '%s' prefix in [%s] for fetching document preview url for Artstor.", artstor_preview_prefix, data[original_document_key][original_sources_key])
         return body
 
     data["object"] = preview_url

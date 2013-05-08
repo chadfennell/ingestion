@@ -3,6 +3,7 @@ from akara import response
 from akara.services import simple_service
 from amara.thirdparty import json
 from dplaingestion.selector import getprop, setprop, exists
+from dplaingestion.audit_logger import audit_logger
 
 @simple_service('POST', 'http://purl.org/la/dp/contributor_to_collection',
     'bhl_contributor_to_collection', 'application/json')
@@ -12,7 +13,8 @@ def bhlcontributortocollection(body,ctype,contributor_field="sourceResource/cont
 
     try:
         data = json.loads(body)
-    except:
+    except Exception as e:
+        audit_logger.error("Bad JSON in %s: %s" % (__name__, e.args[0]))
         response.code = 500
         response.add_header('content-type', 'text/plain')
         return "Unable to parse body as JSON"

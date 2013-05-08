@@ -10,6 +10,7 @@ from akara.services import simple_service
 from amara.thirdparty import json
 
 from dplaingestion.selector import getprop, setprop, exists
+from dplaingestion.audit_logger import audit_logger
 
 
 HTTP_INTERNAL_SERVER_ERROR = 500
@@ -25,8 +26,7 @@ def artstor_cleanup(body, ctype):
         assert ctype.lower() == HTTP_TYPE_JSON, "%s is not %s" % (HTTP_HEADER_TYPE, HTTP_TYPE_JSON)
         data = json.loads(body)
     except Exception as e:
-        error_text = "Bad JSON: %s: %s" % (e.__class__.__name__, str(e))
-        logger.exception(error_text)
+        audit_logger.error("Bad JSON in %s: %s" % (__name__, e.args[0]))
         response.code = HTTP_INTERNAL_SERVER_ERROR
         response.add_header(HTTP_HEADER_TYPE, HTTP_TYPE_TEXT)
         return error_text
