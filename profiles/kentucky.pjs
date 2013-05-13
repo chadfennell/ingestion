@@ -3,8 +3,8 @@
     "name": "kentucky", 
     "list_sets": "/oai.listsets.json?endpoint=http://kdl.kyvl.org/catalog/oai/", 
     "enrichments_rec": [
-        "/select-id", 
-        "/oai-to-dpla", 
+        "/select_id", 
+        "/oai_to_dpla", 
         "/unset_prop?prop=collection",
         "/unset_prop?prop=sourceResource%2Fcontributor",
         "/shred?prop=sourceResource%2Fcreator%2CsourceResource%2Fdate",
@@ -15,16 +15,16 @@
         "/capitalize_value",
         "/enrich_earliest_date",
         "/enrich_location",
-        "/enrich-subject", 
-        "/enrich-type", 
-        "/enrich-format", 
+        "/enrich_subject", 
+        "/enrich_type", 
+        "/enrich_format", 
         "/cleanup_language",
         "/enrich_language",
         "/lookup?prop=sourceResource%2Flanguage%2Fname&target=sourceResource%2Flanguage%2Fname&substitution=iso639_3",
         "/lookup?prop=sourceResource%2Flanguage%2Fname&target=sourceResource%2Flanguage%2Fiso639_3&substitution=iso639_3&inverse=True",
         "/copy_prop?prop=sourceResource%2Frelation&to_prop=hasView&key=@id&create=True",
         "/copy_prop?prop=sourceResource%2Frelation&to_prop=hasView&key=format&create=True",
-        "/enrich-format?prop=hasView%2Fformat",
+        "/enrich_format?prop=hasView%2Fformat",
         "/kentucky_identify_object",
         "/unset_prop?prop=sourceResource%2Frelation",
         "/copy_prop?prop=sourceResource%2Fpublisher&to_prop=dataProvider&create=True",
@@ -40,5 +40,5 @@
         "name": "Kentucky Digital Library"
     }, 
     "type": "oai", 
-    "endpoint_URL": "/dpla-list-records?endpoint=http://kdl.kyvl.org/catalog/oai/&oaiset="
+    "endpoint_URL": "/dpla_list_records?endpoint=http://kdl.kyvl.org/catalog/oai/&oaiset="
 }

@@ -1,12 +1,12 @@
 {
     "enrichments_coll": [
-        "/oai-set-name?sets_service=/oai.listsets.json?endpoint=http://reflections.mndigital.org/oai/oai2.php"
+        "/oai_set_name?sets_service=/oai.listsets.json?endpoint=http://reflections.mndigital.org/oai/oai2.php"
     ], 
     "name": "minnesota", 
     "list_sets": "/oai.listsets.json?endpoint=http://reflections.mndigital.org/oai/oai2.php",
     "enrichments_rec": [
-        "/select-id", 
-        "/oai-to-dpla", 
+        "/select_id", 
+        "/oai_to_dpla", 
         "/shred?prop=sourceResource%2Fcontributor%2CsourceResource%2Fcreator%2CsourceResource%2Fdate",
         "/shred?prop=sourceResource%2Flanguage%2CsourceResource%2Frelation",
         "/shred?prop=sourceResource%2Fsubject%2CsourceResource%2Ftype%2CsourceResource%2Fformat",
@@ -17,10 +17,10 @@
         "/capitalize_value",
         "/enrich_earliest_date",  
         "/enrich_date",
-        "/enrich-subject",
-        "/enrich-type", 
-        "/enrich-format", 
-        "/mdl-enrich-location",
+        "/enrich_subject",
+        "/enrich_type", 
+        "/enrich_format", 
+        "/mdl_enrich_location",
         "/geocode",
         "/contentdm_identify_object",
         "/unset_prop?prop=dataProvider",
@@ -37,5 +37,5 @@
         "name": "Minnesota Digital Library"
     }, 
     "type": "oai", 
-    "endpoint_URL": "/dpla-list-records?endpoint=http://reflections.mndigital.org/oai/oai2.php&oaiset="
+    "endpoint_URL": "/dpla_list_records?endpoint=http://reflections.mndigital.org/oai/oai2.php&oaiset="
 }

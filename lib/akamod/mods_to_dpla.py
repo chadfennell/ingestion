@@ -254,7 +254,7 @@ AGGREGATION_TRANSFORMER["3.3"] = {
     "recordInfo/recordContentSource": lambda d, p: {"provider": getprop(d, p)}
 }
 
-@simple_service('POST', 'http://purl.org/la/dp/mods-to-dpla', 'mods-to-dpla', 'application/ld+json')
+@simple_service('POST', 'http://purl.org/la/dp/mods_to_dpla', 'mods_to_dpla', 'application/ld+json')
 def mods_to_dpla(body, ctype, geoprop=None, version=None):
     """
     Convert output of JSON-ified MODS/METS format into the DPLA JSON-LD format.

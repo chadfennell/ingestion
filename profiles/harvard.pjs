@@ -1,11 +1,11 @@
 {
     "list_sets": "/oai.listsets.json?endpoint=http://vcoai.lib.harvard.edu/vcoai/vc",
     "enrichments_coll": [
-        "/oai-set-name?sets_service=/oai.listsets.json?endpoint=http://vcoai.lib.harvard.edu/vcoai/vc"
+        "/oai_set_name?sets_service=/oai.listsets.json?endpoint=http://vcoai.lib.harvard.edu/vcoai/vc"
     ],
     "name": "harvard",
     "enrichments_rec": [
-        "/select-id?prop=header%2Fidentifier",
+        "/select_id?prop=header%2Fidentifier",
         "/oai_mods_to_dpla",
         "/set_prop?prop=sourceResource%2Frights&value=Held%20in%20the%20collections%20of%20Harvard%20University%2E",
         "/set_prop?prop=sourceResource%2FstateLocatedIn&value=Massachusetts",
@@ -18,10 +18,10 @@
         "/shred?prop=sourceResource%2Fspatial&delim=--",
         "/capitalize_value",
         "/enrich_earliest_date",
-        "/enrich-subject",
+        "/enrich_subject",
         "/enrich_date",
-        "/enrich-type",
-        "/enrich-format",
+        "/enrich_type",
+        "/enrich_format",
         "/harvard_enrich_location",
         "/enrich_location",
         "/enrich_location?prop=sourceResource%2FstateLocatedIn",
@@ -44,5 +44,5 @@
         "name": "Harvard Library"
     },
     "type": "oai",
-    "endpoint_URL": "/dpla-list-records?endpoint=http://vcoai.lib.harvard.edu/vcoai/vc&metadataPrefix=mods&oaiset="
+    "endpoint_URL": "/dpla_list_records?endpoint=http://vcoai.lib.harvard.edu/vcoai/vc&metadataPrefix=mods&oaiset="
 }

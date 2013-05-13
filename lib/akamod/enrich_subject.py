@@ -5,8 +5,8 @@ from amara.thirdparty import json
 from dplaingestion.selector import getprop, setprop, exists
 import re
 
-@simple_service('POST', 'http://purl.org/la/dp/enrich-subject', 'enrich-subject', 'application/json')
-def enrichsubject(body,ctype,action="enrich-subject",prop="sourceResource/subject"):
+@simple_service('POST', 'http://purl.org/la/dp/enrich_subject', 'enrich_subject', 'application/json')
+def enrichsubject(body,ctype,action="enrich_subject",prop="sourceResource/subject"):
     '''   
     Service that accepts a JSON document and enriches the "subject" field of that document
     by: 

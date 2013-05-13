@@ -392,7 +392,7 @@ def test_marc_processor():
 
 }
     """
-    url = server() + "ia-to-dpla"
+    url = server() + "ia_to_dpla"
     resp, content = H.request(url, "POST", body=INPUT_JSON)
     assert str(resp.status).startswith("2"), str(resp) + "\n" + content
     doc = json.loads(content)
@@ -827,7 +827,7 @@ def test_spatial_mapping():
    }
 }
     """
-    url = server() + "ia-to-dpla"
+    url = server() + "ia_to_dpla"
     resp, content = H.request(url, "POST", body=INPUT_JSON)
     assert str(resp.status).startswith("2"), str(resp) + "\n" + content
     doc = json.loads(content)
@@ -888,7 +888,7 @@ def test_multi_spatial_mapping():
    "_id": "yournewhealthins00mass"
 }
     """
-    url = server() + "ia-to-dpla"
+    url = server() + "ia_to_dpla"
     resp, content = H.request(url, "POST", body=INPUT_JSON)
     assert str(resp.status).startswith("2"), str(resp) + "\n" + content
     doc = json.loads(content)

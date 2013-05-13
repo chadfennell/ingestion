@@ -10,7 +10,7 @@ from nose.tools import nottest
 from urllib import quote
 
 
-BASIC_URL = server() + "arc-to-dpla"
+BASIC_URL = server() + "arc_to_dpla"
 
 
 def _get_server_response(body):

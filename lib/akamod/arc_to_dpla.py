@@ -285,7 +285,7 @@ AGGREGATION_TRANSFORMER = {
     "physical-occurrences"  : data_provider_transform
 }
 
-@simple_service("POST", "http://purl.org/la/dp/arc-to-dpla", "arc-to-dpla", "application/ld+json")
+@simple_service("POST", "http://purl.org/la/dp/arc_to_dpla", "arc_to_dpla", "application/ld+json")
 def arctodpla(body,ctype,geoprop=None):
     """   
     Convert output of JSON-ified ARC (NARA) format into the DPLA JSON-LD format.

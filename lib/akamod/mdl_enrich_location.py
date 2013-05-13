@@ -4,8 +4,8 @@ from akara.services import simple_service
 from amara.thirdparty import json
 from dplaingestion.selector import getprop, setprop, exists
 
-@simple_service('POST', 'http://purl.org/la/dp/mdl-enrich-location', 'mdl-enrich-location', 'application/json')
-def mdlenrichlocation(body,ctype,action="mdl-enrich-location", prop="sourceResource/spatial"):
+@simple_service('POST', 'http://purl.org/la/dp/mdl_enrich_location', 'mdl_enrich_location', 'application/json')
+def mdlenrichlocation(body,ctype,action="mdl_enrich_location", prop="sourceResource/spatial"):
     """
     Service that accepts a JSON document and enriches the "spatial" field of that document by
     combining all spatial fields into one. Will also split out country and state on a 
@@ -38,7 +38,7 @@ def mdlenrichlocation(body,ctype,action="mdl-enrich-location", prop="sourceResou
         else:
             # Concatenate all values together to form the name field 
             sp["name"] = ", ".join(v)
-            logger.info("mdl-enrich-location: %s => %s" % (fields, sp["name"],))
+            logger.info("mdl_enrich_location: %s => %s" % (fields, sp["name"],))
 
             if (1 == fields): 
                 # If there is only one element present, it is a country 

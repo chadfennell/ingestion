@@ -133,7 +133,7 @@ AGGREGATION_TRANSFORMER = {
     "files/pdf": set_has_view
 }
 
-@simple_service('POST', 'http://purl.org/la/dp/ia-to-dpla', 'ia-to-dpla', 'application/ld+json')
+@simple_service('POST', 'http://purl.org/la/dp/ia_to_dpla', 'ia_to_dpla', 'application/ld+json')
 def ia_to_dpla(body, ctype, geoprop=None):
     """
     Convert output of Internet Archive service into the DPLA JSON-LD format.

@@ -273,7 +273,7 @@ def test_oaitodpla_date_parse_format_ca_string():
                       }]
     }
 
-    url = server() + "oai-to-dpla"
+    url = server() + "oai_to_dpla"
 
     resp, content = H.request(url, "POST", body=json.dumps(INPUT))
     assert str(resp.status).startswith("2")
@@ -289,7 +289,7 @@ def test_oaitodpla_date_parse_format_bogus_string():
         "date": "BOGUS!"
     }
 
-    url = server() + "oai-to-dpla"
+    url = server() + "oai_to_dpla"
 
     resp, content = H.request(url, "POST", body=json.dumps(INPUT))
     assert str(resp.status).startswith("2")
@@ -311,7 +311,7 @@ def test_enrich_multiple_subject_reformat_to_dict():
         ]
     }
 
-    url = server() + "enrich-subject?prop=subject"
+    url = server() + "enrich_subject?prop=subject"
 
     resp, content = H.request(url, "POST", body=json.dumps(INPUT))
     assert str(resp.status).startswith("2")
@@ -330,7 +330,7 @@ def test_enrich_single_subject_reformat_to_dict():
         ]
     }
 
-    url = server() + "enrich-subject?prop=subject"
+    url = server() + "enrich_subject?prop=subject"
 
     resp, content = H.request(url, "POST", body=json.dumps(INPUT))
     assert str(resp.status).startswith("2")
@@ -351,7 +351,7 @@ def test_enrich_subject_cleanup():
         ]
     }
 
-    url = server() + "enrich-subject?prop=subject"
+    url = server() + "enrich_subject?prop=subject"
 
     resp, content = H.request(url, "POST", body=json.dumps(INPUT))
     assert str(resp.status).startswith("2")
@@ -369,7 +369,7 @@ def test_enrich_type_cleanup():
         u'TBD_physicalformat': ["Statue"]
     }
 
-    url = server() + "enrich-type?prop=type&format_field=TBD_physicalformat"
+    url = server() + "enrich_type?prop=type&format_field=TBD_physicalformat"
 
     resp, content = H.request(url, "POST", body=json.dumps(INPUT))
     print_error_log()
@@ -394,7 +394,7 @@ def test_enrich_format_cleanup_multiple():
         u'type': ["image", "sound"]
     }
 
-    url = server() + "enrich-format?prop=format&type_field=type"
+    url = server() + "enrich_format?prop=format&type_field=type"
 
     resp, content = H.request(url, "POST", body=json.dumps(INPUT))
     assert_same_jsons(EXPECTED, content)
@@ -410,7 +410,7 @@ def test_enrich_format_cleanup():
         u"type": "image"
     }
 
-    url = server() + "enrich-format?prop=format&type_field=type"
+    url = server() + "enrich_format?prop=format&type_field=type"
 
     resp, content = H.request(url, "POST", body=json.dumps(INPUT))
     assert str(resp.status).startswith("2")
@@ -437,11 +437,11 @@ Test physical format appending from format and type fields
                    "Paintings", "Painting"]
     }
 
-    resp, content = H.request(server() + "enrich-type?prop=type&format_field=format", "POST", body=json.dumps(INPUT))
+    resp, content = H.request(server() + "enrich_type?prop=type&format_field=format", "POST", body=json.dumps(INPUT))
     assert str(resp.status).startswith("2")
     FETCHED = json.loads(content)
     assert FETCHED == EXPECTED, DictDiffer(EXPECTED, FETCHED).diff()
-    resp, content = H.request(server() + "enrich-format?prop=format&type_field=type", "POST", body=content)
+    resp, content = H.request(server() + "enrich_format?prop=format&type_field=type", "POST", body=content)
     assert str(resp.status).startswith("2")
     FETCHED = json.loads(content)
     assert FETCHED == EXPECTED, DictDiffer(EXPECTED, FETCHED).diff()
@@ -455,7 +455,7 @@ def test_setting_missing_type_for_missing_format():
     }
     js = json.dumps(INPUT)
 
-    url = server() + "enrich-format?prop=format&type_field=type"
+    url = server() + "enrich_format?prop=format&type_field=type"
 
     resp, content = H.request(url, "POST", body=js)
     pinfo(content)
@@ -478,7 +478,7 @@ def test_setting_missing_type_from_format():
     }
     js = json.dumps(INPUT)
 
-    url = server() + "enrich-format?prop=sourceResource/format&type_field=sourceResource/type"
+    url = server() + "enrich_format?prop=sourceResource/format&type_field=sourceResource/type"
 
     resp, content = H.request(url, "POST", body=js)
     pinfo(content)
@@ -517,7 +517,7 @@ def test_setting_empty_type_from_format():
     for d in DATA:
         INPUT["sourceResource"] = d["in"]
         js = json.dumps(INPUT)
-        url = server() + "enrich-format?prop=sourceResource/format"
+        url = server() + "enrich_format?prop=sourceResource/format"
 
         resp, content = H.request(url, "POST", body=js)
         #pinfo(content)
@@ -572,7 +572,7 @@ def test_setting_has_view_format_and_type():
         }
     ]
 
-    url = server() + "enrich-format"
+    url = server() + "enrich_format"
     for i in range(len(INPUT)):
         resp, content = H.request(url, "POST", json.dumps(INPUT[i]))
 

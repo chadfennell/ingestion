@@ -39,7 +39,7 @@ from akara import module_config
 
 from dplaingestion.oai import oaiservice
 
-LISTSETS_SERVICE_ID = 'http://purl.org/la.dp/dpla-list-sets'
+LISTSETS_SERVICE_ID = 'http://purl.org/la.dp/dpla_list_sets'
 
 @simple_service('GET', LISTSETS_SERVICE_ID, 'oai.listsets.json', 'application/json')
 def listsets(endpoint, limit=None):

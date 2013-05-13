@@ -3,11 +3,11 @@
     "type": "oai",
     "name": "georgia",
     "enrichments_coll": [
-        "/oai-set-name?sets_service=/oai.listsets.json?endpoint=http://dlg.galileo.usg.edu/cgi/oai"
+        "/oai_set_name?sets_service=/oai.listsets.json?endpoint=http://dlg.galileo.usg.edu/cgi/oai"
     ], 
     "enrichments_rec": [
-        "/select-id",
-        "/oai-to-dpla",
+        "/select_id",
+        "/oai_to_dpla",
         "/unset_prop?prop=sourceResource%2Fdate",
         "/copy_prop?prop=originalRecord%2Fsource&to_prop=sourceResource%2Fdescription&create=True&no_replace=True",
         "/shred?prop=sourceResource%2Flanguage%2CsourceResource%2Fpublisher%2CsourceResource%2Frelation%2CsourceResource%2Fformat",
@@ -17,9 +17,9 @@
         "/move_date_values?prop=sourceResource%2Fspatial&to_prop=sourceResource%2Fdate",
         "/capitalize_value",
         "/enrich_earliest_date",
-        "/enrich-subject",
-        "/enrich-type",
-        "/enrich-format",
+        "/enrich_subject",
+        "/enrich_type",
+        "/enrich_format",
         "/enrich_location",
         "/geocode",
         "/cleanup_language",
@@ -40,5 +40,5 @@
         "@id": "http://dp.la/api/contributor/georgia", 
         "name": "Digital Library of Georgia"
     }, 
-    "endpoint_URL": "/dpla-list-records?endpoint=http://dlg.galileo.usg.edu/cgi/oai&oaiset="
+    "endpoint_URL": "/dpla_list_records?endpoint=http://dlg.galileo.usg.edu/cgi/oai&oaiset="
 }

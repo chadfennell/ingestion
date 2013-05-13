@@ -1,12 +1,12 @@
 {
     "list_sets": "/oai.listsets.json?endpoint=http://oai.artstor.org/oaicatmuseum/OAIHandler",
     "enrichments_coll": [
-        "/oai-set-name?sets_service=/oai.listsets.json?endpoint=http://oai.artstor.org/oaicatmuseum/OAIHandler"
+        "/oai_set_name?sets_service=/oai.listsets.json?endpoint=http://oai.artstor.org/oaicatmuseum/OAIHandler"
     ], 
     "name": "artstor", 
     "enrichments_rec": [
-        "/select-id?prop=id", 
-        "/oai-to-dpla", 
+        "/select_id?prop=id", 
+        "/oai_to_dpla", 
         "/decode_html?prop=sourceResource%2Fsubject",
         "/artstor_select_isshownat", 
         "/shred?prop=sourceResource%2Fcontributor%2CsourceResource%2Fcreator%2CsourceResource%2Fdate",
@@ -20,10 +20,10 @@
         "/shred?prop=sourceResource%2Fspatial&delim=--",
         "/capitalize_value",
         "/enrich_earliest_date",
-        "/enrich-subject", 
+        "/enrich_subject", 
         "/enrich_date",
-        "/enrich-type",
-        "/enrich-format",
+        "/enrich_type",
+        "/enrich_format",
         "/move_date_values?prop=sourceResource%2Fformat",
         "/enrich_date",
         "/artstor_identify_object",
@@ -51,5 +51,5 @@
         "name": "ARTstor"
     }, 
     "type": "oai", 
-    "endpoint_URL": "/dpla-list-records?endpoint=http://oai.artstor.org/oaicatmuseum/OAIHandler&oaiset="
+    "endpoint_URL": "/dpla_list_records?endpoint=http://oai.artstor.org/oaicatmuseum/OAIHandler&oaiset="
 }

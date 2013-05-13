@@ -5,9 +5,9 @@ from amara.thirdparty import json
 from dplaingestion.selector import delprop, getprop, setprop, exists
 import re
 
-@simple_service('POST', 'http://purl.org/la/dp/enrich-type', 'enrich-type',
+@simple_service('POST', 'http://purl.org/la/dp/enrich_type', 'enrich_type',
                 'application/json')
-def enrichtype(body,ctype,action="enrich-type", prop="sourceResource/type",
+def enrichtype(body,ctype,action="enrich_type", prop="sourceResource/type",
                format_field="sourceResource/format"):
     """   
     Service that accepts a JSON document and enriches the "type" field of that

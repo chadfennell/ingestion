@@ -9,9 +9,9 @@ from dplaingestion.selector import delprop, getprop, setprop, exists
 from amara.lib.iri import is_absolute
 
 
-@simple_service('POST', 'http://purl.org/la/dp/enrich-format', 'enrich-format',
+@simple_service('POST', 'http://purl.org/la/dp/enrich_format', 'enrich_format',
                 'application/json')
-def enrichformat(body, ctype, action="enrich-format",
+def enrichformat(body, ctype, action="enrich_format",
                  prop="sourceResource/format",
                  type_field="sourceResource/type"):
     """
@@ -79,7 +79,7 @@ def enrichformat(body, ctype, action="enrich-format",
         hasview_format = []
 
         for s in (v if not isinstance(v, basestring) else [v]):
-            if is_absolute(s):
+            if "http" in s and is_absolute(s):
                 s = get_ext(s)
             cleaned = cleanup(s)
             if is_imt(cleaned):

@@ -95,7 +95,7 @@ AGGREGATION_TRANSFORMER = {
     LINKS + "thumbnail"          : lambda d, p: {"object": getprop(d, p)}
 }
 
-@simple_service("POST", "http://purl.org/la/dp/primo-to-dpla", "primo-to-dpla", "application/ld+json")
+@simple_service("POST", "http://purl.org/la/dp/primo_to_dpla", "primo_to_dpla", "application/ld+json")
 def primotodpla(body,ctype,geoprop=None):
     """
     Convert output of JSON-ified PRIMO (MWDL) format into the DPLA JSON-LD format.

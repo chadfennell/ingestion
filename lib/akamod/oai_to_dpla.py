@@ -95,7 +95,7 @@ AGGREGATION_TRANSFORMER = {
     "ingestDate"       : lambda d: {"ingestDate": d.get("ingestDate",None)}
 }
 
-@simple_service('POST', 'http://purl.org/la/dp/oai-to-dpla', 'oai-to-dpla', 'application/ld+json')
+@simple_service('POST', 'http://purl.org/la/dp/oai_to_dpla', 'oai_to_dpla', 'application/ld+json')
 def oaitodpla(body,ctype,geoprop=None):
     '''   
     Convert output of Freemix OAI service into the DPLA JSON-LD format.

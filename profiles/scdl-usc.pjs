@@ -1,12 +1,12 @@
 {
     "enrichments_coll": [
-        "/oai-set-name?sets_service=/oai.listsets.json?endpoint=http://digital.tcl.sc.edu:81/cgi-bin/oai.exe"
+        "/oai_set_name?sets_service=/oai.listsets.json?endpoint=http://digital.tcl.sc.edu:81/cgi-bin/oai.exe"
     ], 
     "name": "scdl-usc", 
     "list_sets": "/oai.listsets.json?endpoint=http://digital.tcl.sc.edu:81/cgi-bin/oai.exe", 
     "enrichments_rec": [
-        "/select-id", 
-        "/oai-to-dpla", 
+        "/select_id", 
+        "/oai_to_dpla", 
         "/shred?prop=sourceResource%2Fcontributor%2CsourceResource%2Fcreator%2CsourceResource%2Fdate",
         "/shred?prop=sourceResource%2Flanguage%2CsourceResource%2Fpublisher%2CsourceResource%2Frelation",
         "/shred?prop=sourceResource%2Fsubject%2CsourceResource%2Ftype%2CsourceResource%2Fformat",
@@ -18,9 +18,9 @@
         "/capitalize_value",
         "/enrich_earliest_date",
         "/enrich_date",
-        "/enrich-subject", 
-        "/enrich-type", 
-        "/enrich-format", 
+        "/enrich_subject", 
+        "/enrich_type", 
+        "/enrich_format", 
         "/contentdm_identify_object",
         "/enrich_location",
         "/scdl_enrich_location",
@@ -42,5 +42,5 @@
         "name": "South Carolina Digital Library"
     }, 
     "type": "oai", 
-    "endpoint_URL": "/dpla-list-records?endpoint=http://digital.tcl.sc.edu:81/cgi-bin/oai.exe&oaiset="
+    "endpoint_URL": "/dpla_list_records?endpoint=http://digital.tcl.sc.edu:81/cgi-bin/oai.exe&oaiset="
 }

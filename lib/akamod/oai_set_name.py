@@ -5,7 +5,7 @@ from akara import logger
 from amara.lib.iri import is_absolute
 from amara.thirdparty import json, httplib2
 
-@simple_service('POST', 'http://purl.org/la/dp/oai-set-name', 'oai-set-name', 'application/json')
+@simple_service('POST', 'http://purl.org/la/dp/oai_set_name', 'oai_set_name', 'application/json')
 def oaisetname(body,ctype,sets_service=None):
     '''   
     Service that accepts a JSON document and sets the "name" property based on looking up

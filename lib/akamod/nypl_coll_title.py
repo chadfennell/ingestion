@@ -17,7 +17,7 @@ HTTP_TYPE_TEXT = 'text/plain'
 HTTP_HEADER_TYPE = 'Content-Type'
 
 
-@simple_service('POST', 'http://purl.org/la/dp/nypl-coll-title', 'nypl-coll-title', HTTP_TYPE_JSON)
+@simple_service('POST', 'http://purl.org/la/dp/nypl_coll_title', 'nypl_coll_title', HTTP_TYPE_JSON)
 def nypl_identify_object(body, ctype, list_sets=None):
 
     try:

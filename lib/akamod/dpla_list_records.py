@@ -40,9 +40,9 @@ from akara import module_config
 from dplaingestion.oai import oaiservice
 
 
-LISTRECORDS_SERVICE_ID = 'http://purl.org/la.dp/dpla-list-records'
+LISTRECORDS_SERVICE_ID = 'http://purl.org/la.dp/dpla_list_records'
 
-@simple_service('GET', LISTRECORDS_SERVICE_ID, 'dpla-list-records', 'application/json')
+@simple_service('GET', LISTRECORDS_SERVICE_ID, 'dpla_list_records', 'application/json')
 def listrecords(endpoint, oaiset=None, resumption_token=None, metadataPrefix="oai_dc", limit=1000):
     """
     e.g.:

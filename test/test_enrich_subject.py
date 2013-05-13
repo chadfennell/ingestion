@@ -3,7 +3,7 @@ from server_support import server, H
 from amara.thirdparty import json
 from dict_differ import DictDiffer, assert_same_jsons, pinfo
 
-url = server() + "enrich-subject"
+url = server() + "enrich_subject"
 
 
 def _get_server_response(body, prop="subject"):

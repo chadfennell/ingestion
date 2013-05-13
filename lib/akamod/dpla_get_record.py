@@ -41,14 +41,14 @@ from dplaingestion.oai import oaiservice
 import sys
 
 
-GETRECORD_SERVICE_ID = 'http://purl.org/la.dp/dpla-get-record'
+GETRECORD_SERVICE_ID = 'http://purl.org/la.dp/dpla_get_record'
 
-@simple_service('GET', GETRECORD_SERVICE_ID, 'dpla-get-record', 'application/json')
+@simple_service('GET', GETRECORD_SERVICE_ID, 'dpla_get_record', 'application/json')
 def getrecord(endpoint, id):
     """
     e.g.:
 
-    curl "http://localhost:8880/dpla-get-record?endpoint=URL&id=IDENTIFIER"
+    curl "http://localhost:8880/dpla_get_record?endpoint=URL&id=IDENTIFIER"
     """
     remote = oaiservice(endpoint, logger)
     get_record_result = remote.get_record(id=id)
