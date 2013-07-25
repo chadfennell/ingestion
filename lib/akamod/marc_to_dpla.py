@@ -508,14 +508,16 @@ def all_transform(d, p):
         del data["sourceResource"][key]
 
     # Handle Hathi isShownAt
-    is_shown_at = None
-    for id in _as_list(getprop(data, "sourceResource/identifier")):
-        if id.startswith("Hathi: "):
-            id = id.split("Hathi: ")[-1]
-            is_shown_at = "http://catalog.hathitrust.org/Record/%s" % id
-            break
-    if is_shown_at:
-        setprop(data, "isShownAt", is_shown_at)
+    identifiers = getprop(data, "sourceResource/identifier")
+    if identifiers:
+        is_shown_at = None
+        for id in _as_list(identifiers):
+            if id.startswith("Hathi: "):
+                id = id.split("Hathi: ")[-1]
+                is_shown_at = "http://catalog.hathitrust.org/Record/%s" % id
+                break
+        if is_shown_at:
+            setprop(data, "isShownAt", is_shown_at)
 
     return data
 
