@@ -404,17 +404,17 @@ def all_transform(d, p):
                     for tup in tuples:
                         prop, codes = tup
                         values = _get_values(_dict, codes)
-                        if prop == "provider":
-                            data.update(provider_transform(values))
-                        elif prop == "dataProvider":
-                            if tag == "974" and PROVIDER == "hathitrust":
-                                dp = dataprovider_transform_hathi(values)
-                                data.update(dp)
-                            elif tag == "852" and PROVIDER == "uiuc":
-                                dp = dataprovider_transform_uiuc(values)
-                                data.update(dp)
-                        else:
-                            if values:
+                        if values:
+                            if prop == "provider":
+                                data.update(provider_transform(values))
+                            elif prop == "dataProvider":
+                                if tag == "974" and PROVIDER == "hathitrust":
+                                    dp = dataprovider_transform_hathi(values)
+                                    data.update(dp)
+                                elif tag == "852" and PROVIDER == "uiuc":
+                                    dp = dataprovider_transform_uiuc(values)
+                                    data.update(dp)
+                            else:
                                 data[prop] = values[0]
             # Handle source_resource_map mathces
             for match, tuples in source_resource_map.iteritems():
@@ -432,30 +432,32 @@ def all_transform(d, p):
                                 # Handle values for all other sourceResource
                                 # fields
                                 values = _get_values(_dict, codes)
-                            if prop == "identifier":
-                                # Handle identifier labeling
-                                label = None
-                                if tag == "020":
-                                    label = "ISBN:"
-                                elif tag == "022":
-                                    label = "ISSN:"
-                                elif tag == "050":
-                                    label = "LC call number:"
-                                if label:
-                                    # Insert label as first value item as
-                                    # values will be joined
-                                    values.insert(0, label)
-                            values = _join_sourceresource_values(prop, values)
-                            if prop == "type":
-                                data["sourceResource"].update(
-                                    datafield_type_transform(values)
-                                )
-                            else:
-                                data["sourceResource"][prop].extend(values)
+                            if values:
+                                if prop == "identifier":
+                                    # Handle identifier labeling
+                                    label = None
+                                    if tag == "020":
+                                        label = "ISBN:"
+                                    elif tag == "022":
+                                        label = "ISSN:"
+                                    elif tag == "050":
+                                        label = "LC call number:"
+                                    if label:
+                                        # Insert label as first value item as
+                                        # values will be joined
+                                        values.insert(0, label)
+                                values = _join_sourceresource_values(prop, values)
+                                if prop == "type":
+                                    data["sourceResource"].update(
+                                        datafield_type_transform(values)
+                                    )
+                                else:
+                                    data["sourceResource"][prop].extend(values)
                         elif len(tup) == 3:
                             prop, index, codes = tup
                             values = _get_values(_dict, codes)
-                            data["sourceResource"][prop][index] = values 
+                            if values:
+                                data["sourceResource"][prop][index] = values 
             if tag == "662":
                 # Test: Log document with 662 (spatial)
                 logger.debug("Document has 662: %s" % d["_id"])
