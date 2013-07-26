@@ -104,6 +104,15 @@ def provider_transform(values):
 
     return {"provider": provider} if provider else {}
 
+def dataprovider_transform_uiuc(values):
+    data = {}
+    data["dataProvider"] = values[0]
+    data["provider"] = {}
+    data["provider"]["@id"] = "http://dp.la/api/contributor/uiuc"
+    data["provider"]["name"] = values[0]
+
+    return data
+
 def dataprovider_transform_hathi(values):
     providers = {
         "bc": "Boston College",
@@ -343,8 +352,10 @@ def all_transform(d, p):
     # _get_values). 
     data_map = {
         lambda t: t == "856":           [("isShownAt", "u")],
+        # Hathi
         lambda t: t == "973":           [("provider", "ab")],
         lambda t: t == "974":           [("dataProvider", "u")],
+        # UIUC
         lambda t: t == "852":           [("dataProvider", "a")]
     }
     source_resource_map = {
@@ -400,8 +411,8 @@ def all_transform(d, p):
                                 dp = dataprovider_transform_hathi(values)
                                 data.update(dp)
                             elif tag == "852" and PROVIDER == "uiuc":
-                                if values:
-                                    data["dataProvider"] = values[0]
+                                dp = dataprovider_transform_uiuc(values)
+                                data.update(dp)
                         else:
                             if values:
                                 data[prop] = values[0]
