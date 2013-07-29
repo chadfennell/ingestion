@@ -7,6 +7,7 @@ import ConfigParser
 from copy import deepcopy
 from couchdb import Server
 from datetime import datetime
+from dplaingestion.selector import setprop
 from dplaingestion.dict_differ import DictDiffer
 
 class Couch(object):
@@ -109,6 +110,11 @@ class Couch(object):
                     pass
                 build_time = (time.time() - start)/60
                 print >> sys.stderr, "Completed in %s minutes" % build_time
+
+    def _update_ingestion_doc(self, ingestion_doc, **kwargs):
+        for prop, vale in kwargs:
+            setprop(ingestion_doc, prop, value)
+        self.dashboard_db.save(ingestion_doc)
 
     def _get_doc_ids(self, docs):
         return [doc["id"] for doc in docs]
@@ -286,6 +292,51 @@ class Couch(object):
     def _bulk_post_to(self, db, docs, **options):
         resp = db.update(docs, **options)
         self.logger.debug("%s database response: %s" % (db.name, resp))
+
+    def _create_ingestion_document(self, provider, ingestion_sequence,
+                                   uri_base):
+        """Creates and returns an ingestion document for the provider.
+        """
+        ingestion_doc = {
+            "provider": provider,
+            "type": "ingestion",
+            "ingestionSequence": ingestion_sequence,
+            "ingestDate": datetime.now().isoformat(),
+            "countAdded": 0,
+            "countChanged": 0,
+            "countDeleted": 0,
+            "uri_base": uri_base,
+            "profile_path": None,
+            "fetched_data_path": None,
+            "enriched_data_path": None,
+            "fetch_process": {
+                "status": None,
+                "start_time": None
+                "end_time": None
+                "error": None
+            },
+            "enrich_process": {
+                "status": None,
+                "start_time": None
+                "end_time": None
+                "error": None
+            },
+            "save_process": {
+                "status": None,
+                "start_time": None
+                "end_time": None
+                "error": None
+            },
+            "delete_process": {
+                "status": None,
+                "start_time": None
+                "end_time": None
+                "error": None
+            }
+        }
+        ingestion_doc_id = self.dashboard_db.save(ingestion_doc)[0]
+
+        return ingestion_doc_id
 
     def create_ingestion_doc_and_backup_db(self, provider):
         """Creates the ingestion document and backs up the provider documents
