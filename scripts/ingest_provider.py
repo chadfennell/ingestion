@@ -1,7 +1,12 @@
 #!/usr/bin/env python
+"""
+Script to ingest provider data
+
+Usage:
+    $ python ingest_provider.py profile_path
+"""
 import sys
 import argparse
-import ConfigParser
 from dplaingestion import create_ingestion_document
 from dplaingestion import fetch_records
 from dplaingestion import enrich_records
@@ -21,14 +26,9 @@ def main(argv):
     parser = define_arguments()
     args = parser.parse_args(argv[1:])
 
-    config_file = ("akara.ini")
-    config = ConfigParser.ConfigParser()
-    config.readfp(open(config_file))
-    uri_base = "http://localhost:" + config.get("Akara", "Port")
-
     for profile_path in args.profile_path:
         print "Creating ingestion document for profile %s" % profile_path
-        ingestion_doc_id = create_ingestion_document(uri_base, profile_path)
+        ingestion_doc_id = create_ingestion_document(profile_path)
         if ingestion_doc_id is None:
             print "Error creating ingestion document"
             continue

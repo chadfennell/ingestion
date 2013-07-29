@@ -1,5 +1,12 @@
 #!/usr/bin/env python
+"""
+Script to remove previous ingestion document after a reingestion
+
+Usage:
+    $ python remove_deleted_documents.py ingestion_document_id
+"""
 import os
+import sys
 import argparse
 from datetime import datetime
 from amara.thirdparty import json

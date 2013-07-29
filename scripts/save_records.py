@@ -1,5 +1,12 @@
 #!/usr/bin/env python
+"""
+Script to save data from JSON files to the CouchDB database
+
+Usage:
+    $ python save_records.py ingestion_document_id
+"""
 import os
+import sys
 import argparse
 from datetime import datetime
 from amara.thirdparty import json

@@ -1,5 +1,13 @@
 #!/usr/bin/env python
+"""
+Script to create an ingestion document
+
+Usage:
+    $ python create_ingestion_document.py profile_path
+"""
+import sys
 import argparse
+import ConfigParser
 from amara.thirdparty import json
 from dplaingestion.couch import Couch
 from dplaingestion.selector import getprop
@@ -7,9 +15,6 @@ from dplaingestion.selector import getprop
 def define_arguments():
     """Defines command line arguments for the current script"""
     parser = argparse.ArgumentParser()
-    parser.add_argument("uri_base",
-                        help="The base URI for the server hosting the " +
-                             "enrichment pipeline")
     parser.add_argument("profile_path",
                         help="The path to the profile(s) to be processed",
                         nargs="+")
@@ -19,6 +24,11 @@ def define_arguments():
 def main(argv):
     parser = define_arguments()
     args = parser.parse_args(argv[1:])
+
+    config_file = ("akara.ini")
+    config = ConfigParser.ConfigParser()
+    config.readfp(open(config_file))
+    uri_base = "http://localhost:" + config.get("Akara", "Port")
 
     with open(args.profile_path, "r") as f:
         try:

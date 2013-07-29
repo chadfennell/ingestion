@@ -1,17 +1,19 @@
 #!/usr/bin/env python
 """
-Script to enrich data from JSON files
+Script to fetch records from a provider.
 
 Usage:
-    $ python enrich_records.py ingesiton_document_id
+    $ python fetch_records.py ingestion_document_id
 """
 import os
-import sys
 import argparse
 from datetime import datetime
 from amara.thirdparty import json
 from dplaingestion.couch import Couch
 from dplaingestion.selector import getprop
+
+class Fetcher():
+    pass
 
 def define_arguments():
     """Defines command line arguments for the current script"""
@@ -27,39 +29,18 @@ def main(argv):
 
     couch = Couch()
     ingestion_doc = couch.dashboard_db[args.ingestion_document_id]
-    if getprop(ingestion_doc, "fetch_process/status") != "complete":
-        print "Cannot enrich, fetch process did not complete"
-        return -1
 
     # Update ingestion document
-    enrich_dir = create_enrich_dir()
+    fetch_dir = create_fetch_dir()
     kwargs = {
-        "enrich_process/status": "running",
-        "enrich_process/data_dir": enrich_dir,
-        "enrich_process/start_time": datetime.now().isoformat()
+        "fetch_process/status": "running",
+        "fetch_process/data_dir": fetch_dir,
+        "fetch_process/start_time": datetime.now().isoformat()
     }
     couch._update_ingestion_doc(ingestion_doc, kwargs)
 
     error_msg = None
-    fetch_dir = getprop(ingestion_doc, "fetch_process/data_dir")
-    for filename in os.listdir(fetch_dir):
-        filepath = os.join(fetch_dir, file)
-        with open(filepath, "r") as f:
-            try:
-                data = json.loads(f)
-            except:
-                error_msg.append("Error loading " + filepath)
-                break
-
-        # Enrich
-        resp, content = H.request("/enrich", json.dumps(data))
-        if resp != 200:
-            error_msg.append("Error enriching data from " + filepath)
-            break
-
-        # Write enriched data to file
-        with open(os.join(enrich_dir, filename), "w") as f:
-            json.dumps(content, f)
+    # TODO: instantiate Fetcher
 
     # Update ingestion document
     if error_msg:
