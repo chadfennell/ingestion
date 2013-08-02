@@ -44,5 +44,5 @@
         "name": "Harvard Library"
     },
     "type": "oai",
-    "endpoint_URL": "/dpla-list-records?endpoint=http://vcoai.lib.harvard.edu/vcoai/vc&metadataPrefix=mods&oaiset="
+    "endpoint_url": "/dpla-list-records?endpoint=http://vcoai.lib.harvard.edu/vcoai/vc&metadataPrefix=mods&oaiset="
 }

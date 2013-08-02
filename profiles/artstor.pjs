@@ -51,5 +51,5 @@
         "name": "ARTstor"
     }, 
     "type": "oai", 
-    "endpoint_URL": "/dpla-list-records?endpoint=http://oai.artstor.org/oaicatmuseum/OAIHandler&oaiset="
+    "endpoint_url": "/dpla-list-records?endpoint=http://oai.artstor.org/oaicatmuseum/OAIHandler&oaiset="
 }

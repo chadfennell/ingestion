@@ -25,5 +25,5 @@
         "name": "Harvard Virtual Collection"
     }, 
     "type": "oai", 
-    "endpoint_URL": "http://localhost:8878/dpla-list-records?endpoint=http://vcoai.lib.harvard.edu/vcoai/vc&oaiset="
+    "endpoint_url": "http://localhost:8878/dpla-list-records?endpoint=http://vcoai.lib.harvard.edu/vcoai/vc&oaiset="
 }

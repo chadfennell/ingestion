@@ -311,26 +311,26 @@ class Couch(object):
             "enriched_data_path": None,
             "fetch_process": {
                 "status": None,
-                "start_time": None
-                "end_time": None
+                "start_time": None,
+                "end_time": None,
                 "error": None
             },
             "enrich_process": {
                 "status": None,
-                "start_time": None
-                "end_time": None
+                "start_time": None,
+                "end_time": None,
                 "error": None
             },
             "save_process": {
                 "status": None,
-                "start_time": None
-                "end_time": None
+                "start_time": None,
+                "end_time": None,
                 "error": None
             },
             "delete_process": {
                 "status": None,
-                "start_time": None
-                "end_time": None
+                "start_time": None,
+                "end_time": None,
                 "error": None
             }
         }

@@ -34,5 +34,5 @@
         "name": "National Archives and Records Administration"
     }, 
     "type": "arc", 
-    "endpoint_URL": "file:/home/miguel/nara/ArchivalDescriptions-digital/"
+    "endpoint_url": "file:/home/miguel/nara/ArchivalDescriptions-digital/"
 }

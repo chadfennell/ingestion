@@ -32,5 +32,5 @@
         "name": "University of Illinois at Urbana-Champaign"
     }, 
     "type": "oai",
-    "endpoint_URL": "/dpla-list-records?endpoint=http://ratri.grainger.illinois.edu/oca-oaiprovider/oai.asp&metadataPrefix=marc&oaiset="
+    "endpoint_url": "/dpla-list-records?endpoint=http://ratri.grainger.illinois.edu/oca-oaiprovider/oai.asp&metadataPrefix=marc&oaiset="
 }

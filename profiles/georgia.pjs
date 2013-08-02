@@ -40,5 +40,5 @@
         "@id": "http://dp.la/api/contributor/georgia", 
         "name": "Digital Library of Georgia"
     }, 
-    "endpoint_URL": "/dpla-list-records?endpoint=http://dlg.galileo.usg.edu/cgi/oai&oaiset="
+    "endpoint_url": "/dpla-list-records?endpoint=http://dlg.galileo.usg.edu/cgi/oai&oaiset="
 }

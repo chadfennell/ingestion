@@ -36,5 +36,5 @@
         "name": "David Rumsey"
     }, 
     "type": "oai", 
-    "endpoint_URL": "/dpla-list-records?endpoint=http://www.davidrumsey.com/luna/servlet/oai&oaiset="
+    "endpoint_url": "/dpla-list-records?endpoint=http://www.davidrumsey.com/luna/servlet/oai&oaiset="
 }

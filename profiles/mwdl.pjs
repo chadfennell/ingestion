@@ -36,5 +36,5 @@
         "name": "Mountain West Digital Library"
     }, 
     "type": "primo", 
-    "endpoint_URL": "http://thoth.library.utah.edu:1701/PrimoWebServices/xservice/search/brief?institution=MWDL&loc=local,scope:%28mw%29&query=facet_tlevel,exact,online_resources"
+    "endpoint_url": "http://thoth.library.utah.edu:1701/PrimoWebServices/xservice/search/brief?institution=MWDL&loc=local,scope:%28mw%29&query=facet_tlevel,exact,online_resources"
 }

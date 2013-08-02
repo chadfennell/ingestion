@@ -36,12 +36,12 @@
         "name": "Internet Archive"
     }, 
     "type": "ia",
-    "endpoint_URL": "http://archive.org/advancedsearch.php?q=collection%3A%22{0}%22&fl%5B%5D=identifier&output=json",
-    "get_file_URL": "http://www.archive.org/download/{0}/{1}",
+    "endpoint_url": "http://archive.org/advancedsearch.php?q=collection%3A%22{0}%22&fl%5B%5D=identifier&output=json",
+    "get_file_url": "http://www.archive.org/download/{0}/{1}",
     "prefix_files": "{0}_files.xml",
     "prefix_meta": "{0}_meta.xml",
     "prefix_dc": "{0}_dc.xml",
-    "shown_at_URL": "http://archive.org/details/{0}",
+    "shown_at_url": "http://archive.org/details/{0}",
     "removed_enrichments_rec": [
         "/copy_prop?prop=originalRecord%2Fmetadata%2Fsponsor&to_prop=sourceResource%2Fcollection%2Ftitle"
     ]

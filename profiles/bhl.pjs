@@ -38,5 +38,5 @@
         "name": "Biodiversity Heritage Library"
     }, 
     "type": "oai", 
-    "endpoint_URL": "/dpla-list-records?endpoint=http://www.biodiversitylibrary.org/oai&oaiset="
+    "endpoint_url": "/dpla-list-records?endpoint=http://www.biodiversitylibrary.org/oai&oaiset="
 }

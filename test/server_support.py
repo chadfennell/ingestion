@@ -106,6 +106,7 @@ MODULES = [
     "freemix_akara.oai",
     "dplaingestion.oai",
     "dplaingestion.couch",
+    "dplaingestion.fetcher",
     "dplaingestion.akamod.enrich",
     "dplaingestion.akamod.enrich-subject",
     "dplaingestion.akamod.enrich-type",

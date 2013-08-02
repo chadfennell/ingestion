@@ -43,5 +43,5 @@
         "name": "Digital Commonwealth"
     }, 
     "type": "oai", 
-    "endpoint_URL": "/dpla-list-records?endpoint=http://digitalcommonwealth.org/oai-pmh-repository/request&oaiset="
+    "endpoint_url": "/dpla-list-records?endpoint=http://digitalcommonwealth.org/oai-pmh-repository/request&oaiset="
 }

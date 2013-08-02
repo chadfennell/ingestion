@@ -31,6 +31,6 @@
         "name": "New York Public Library"
     }, 
     "type": "nypl",
-    "endpoint_URL": "http://j2k.repo.nypl.org/api/v1/items/{0}",
-    "get_record_URL": "http://j2k.repo.nypl.org/api/v1/items/mods/{0}"
+    "endpoint_url": "http://j2k.repo.nypl.org/api/v1/items/{0}",
+    "get_record_url": "http://j2k.repo.nypl.org/api/v1/items/mods/{0}"
 }

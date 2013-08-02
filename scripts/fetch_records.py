@@ -10,10 +10,8 @@ import argparse
 from datetime import datetime
 from amara.thirdparty import json
 from dplaingestion.couch import Couch
+from dplaingestion.fetcher import create_fetcher
 from dplaingestion.selector import getprop
-
-class Fetcher():
-    pass
 
 def define_arguments():
     """Defines command line arguments for the current script"""
@@ -39,8 +37,14 @@ def main(argv):
     }
     couch._update_ingestion_doc(ingestion_doc, kwargs)
 
-    error_msg = None
-    # TODO: instantiate Fetcher
+    error_msg = []
+    fetcher = create_fetcher(ingestion_doc["profile_path"])
+    for response in fetcher.request_records():
+        # TODO: handle errors
+        # Write records to file
+        filename = "TEMPORARY" # TODO
+        with open(filename, "w") as f:
+            f.write(records)
 
     # Update ingestion document
     if error_msg:

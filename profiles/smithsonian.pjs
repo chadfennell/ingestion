@@ -40,5 +40,5 @@
         "name": "Smithsonian Institution"
     },
     "type": "edan",
-    "endpoint_URL": "file:/home/szymon/smithsonian_demo/"
+    "endpoint_url": "file:/home/szymon/smithsonian_demo/"
 }

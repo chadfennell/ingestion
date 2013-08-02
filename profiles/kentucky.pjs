@@ -40,5 +40,5 @@
         "name": "Kentucky Digital Library"
     }, 
     "type": "oai", 
-    "endpoint_URL": "/dpla-list-records?endpoint=http://kdl.kyvl.org/catalog/oai/&oaiset="
+    "endpoint_url": "/dpla-list-records?endpoint=http://kdl.kyvl.org/catalog/oai/&oaiset="
 }
