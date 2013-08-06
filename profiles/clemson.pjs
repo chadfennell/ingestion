@@ -43,6 +43,6 @@
         "@id": "http://dp.la/api/contributor/scdl-clemson", 
         "name": "South Carolina Digital Library"
     }, 
-    "type": "oai", 
+    "type": "oai_verbs", 
     "endpoint_url": "http://repository.clemson.edu/cgi-bin/oai.exe"
 }

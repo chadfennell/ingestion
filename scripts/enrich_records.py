@@ -7,11 +7,15 @@ Usage:
 """
 import os
 import sys
+import tempfile
 import argparse
 from datetime import datetime
 from amara.thirdparty import json
 from dplaingestion.couch import Couch
 from dplaingestion.selector import getprop
+
+def create_enrich_dir(provider):
+    return tempfile.mdktemp(provider)
 
 def define_arguments():
     """Defines command line arguments for the current script"""
@@ -32,7 +36,7 @@ def main(argv):
         return -1
 
     # Update ingestion document
-    enrich_dir = create_enrich_dir()
+    enrich_dir = create_enrich_dir(ingestion_doc["provider"])
     kwargs = {
         "enrich_process/status": "running",
         "enrich_process/data_dir": enrich_dir,
@@ -49,22 +53,23 @@ def main(argv):
                 data = json.loads(f)
             except:
                 error_msg.append("Error loading " + filepath)
-                break
+                continue
 
         # Enrich
         resp, content = H.request("/enrich", json.dumps(data))
         if resp != 200:
             error_msg.append("Error enriching data from " + filepath)
-            break
+            continue
 
         # Write enriched data to file
         with open(os.join(enrich_dir, filename), "w") as f:
             json.dumps(content, f)
 
     # Update ingestion document
-    if error_msg:
+    try os.rmdir(enrich_dir):
+        # Error if enrich_dir was empty
         status = "error"
-    else:
+    except:
         status = "complete"
     kwargs = {
         "enrich_process/status": status,

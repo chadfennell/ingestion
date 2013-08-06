@@ -26,45 +26,95 @@ def test_oai_fetcher_valid_subresource():
     profile_path = "profiles/clemson.pjs"
     fetcher = get_fetcher(profile_path)
     fetcher.uri_base = uri_base
-    assert fetcher.__class__.__name__ == "OAI"
+    assert fetcher.__class__.__name__ == "OAIVerbsFetcher"
 
     fetcher.subresources = ["gmb"]
-    for response in fetcher.request_records():
+    for response in fetcher.fetch_all_data():
         assert response.get("error") is None
-        assert response.get("content") is not None
+        assert response.get("records") is not None
+
+    assert fetcher.subresources.keys() == ["gmb"]
 
 def test_oai_fetcher_invalid_subresource():
     profile_path = "profiles/clemson.pjs"
     fetcher = get_fetcher(profile_path)
     fetcher.uri_base = uri_base
-    assert fetcher.__class__.__name__ == "OAI"
+    assert fetcher.__class__.__name__ == "OAIVerbsFetcher"
 
     fetcher.subresources = ["banana"]
-    for response in fetcher.request_records():
+    for response in fetcher.fetch_all_data():
         assert response.get("error") is not None
-        assert response.get("content") is None
+        assert response.get("records") is None
+
+    assert fetcher.subresources.keys() == []
 
 def test_oai_fetcher_all_subresources():
     profile_path = "profiles/clemson.pjs"
     fetcher = get_fetcher(profile_path)
     fetcher.uri_base = uri_base
-    assert fetcher.__class__.__name__ == "OAI"
+    assert fetcher.__class__.__name__ == "OAIVerbsFetcher"
 
-    for response in fetcher.request_records():
+    for response in fetcher.fetch_all_data():
         assert response.get("error") is None
-        assert response.get("content") is not None
+        assert response.get("records") is not None
 
-    assert fetcher.subresources == scdl_all_subresources
+    diff = [subresource for subresource in scdl_all_subresources if
+            subresource not in fetcher.subresources]
+    assert diff == []
 
 def test_oai_fetcher_with_blacklist():
     profile_path = "profiles/clemson.pjs"
     fetcher = get_fetcher(profile_path)
     fetcher.uri_base = uri_base
-    assert fetcher.__class__.__name__ == "OAI"
+    assert fetcher.__class__.__name__ == "OAIVerbsFetcher"
 
     fetcher.blacklist = scdl_blacklist
-    for response in fetcher.request_records():
+    for response in fetcher.fetch_all_data():
         pass
 
-    assert list(set(fetcher.subresources)) == list(set(scdl_all_subresources) -
-                                                    set(scdl_blacklist))
+    subresources = list(set(scdl_all_subresources) - set(scdl_blacklist))
+    diff = [subresource for subresource in subresources if
+            subresource not in fetcher.subresources]
+    assert diff == []
+
+def test_absolute_url_fetcher_nypl():
+    profile_path = "profiles/nypl.pjs"
+    fetcher =  get_fetcher(profile_path)
+    fetcher.uri_base = uri_base
+    assert fetcher.__class__.__name__ == "AbsoluteURLFetcher"
+
+    count = 0
+    for response in fetcher.fetch_all_data():
+        count += 1
+        assert response.get("error") is None
+        assert response.get("records") is not None
+        if count == 5:
+            break
+
+def test_absolute_url_fetcher_uva1():
+    profile_path = "profiles/virginia.pjs"
+    fetcher =  get_fetcher(profile_path)
+    fetcher.uri_base = uri_base
+    assert fetcher.__class__.__name__ == "AbsoluteURLFetcher"
+
+    count = 0
+    for response in fetcher.fetch_all_data():
+        count += 1
+        assert response.get("error") is None
+        assert response.get("records") is not None
+        if count == 5:
+            break
+
+def test_absolute_url_fetcher_uva2():
+    profile_path = "profiles/virginia_books.pjs"
+    fetcher =  get_fetcher(profile_path)
+    fetcher.uri_base = uri_base
+    assert fetcher.__class__.__name__ == "AbsoluteURLFetcher"
+
+    count = 0
+    for response in fetcher.fetch_all_data():
+        count += 1
+        assert response.get("error") is None
+        assert response.get("records") is not None
+        if count == 5:
+            break

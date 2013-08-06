@@ -1,10 +1,38 @@
 import os
 import sys
 import xmltodict
+from akara import logger
 from urllib import urlencode
 from amara.thirdparty import json
 from amara.thirdparty import httplib2
 from amara.lib.iri import is_absolute
+try:
+    from collections import OrderedDict
+except:
+    from ordereddict import OrderedDict
+
+from dplaingestion.selector import exists
+from dplaingestion.selector import getprop as get_prop
+
+def getprop(obj, path):
+    return get_prop(obj, path, keyErrorAsNone=True)
+
+def iterify(iterable):
+    '''
+Treat iterating over a single item or an interator seamlessly.
+'''
+    if (isinstance(iterable, basestring) \
+        or isinstance(iterable, dict)):
+        iterable = [iterable]
+    try:
+        iter(iterable)
+    except TypeError:
+        iterable = [iterable]
+    return iterable
+
+ARC_PARSE = lambda doc: xmltodict.parse(doc, xml_attribs=True, attr_prefix='',
+                                        force_cdata=False,
+                                        ignore_whitespace_cdata=True)
 
 class Fetcher(object):
     """The base class for all fetchers.
@@ -12,6 +40,7 @@ class Fetcher(object):
     """
     def __init__(self, profile):
         """Set common attributes"""
+        self.provider = profile.get("name")
         self.uri_base = profile.get("uri_base")
         self.blacklist = profile.get("blacklist")
         self.contributor = profile.get("contributor")
@@ -21,116 +50,343 @@ class Fetcher(object):
         self.http_handle = httplib2.Http('/tmp/.pollcache')
         self.http_handle.force_exception_as_status_code = True
 
-    def request_content_from(self, url, attempts=5):
-        response = {"error": None, "content": None}
-        for i in range(attempts)
-            resp, content = self.http_handle.request(url)
+    def remove_blacklisted_subresources(self):
+        if self.blacklist:
+            for set in self.blacklist:
+                del self.subresources[set]
+
+    def request_content_from(self, url, params={}, attempts=5):
+        error, content = None, None
+        if params:
+            if "?" in url:
+                url += "&" + urlencode(params)
+            else:
+                url += "?" + urlencode(params)
+
+        resp, content = self.http_handle.request(url)
+        for i in range(attempts):
             # Break if 2xx response status
             if resp["status"].startswith("2"):
                 break
 
         # Handle non 2xx response status
         if not resp["status"].startswith("2"):
-            response["error"] = "Error ('%s') resolving URL: %s" % \
-                                (resp["status"], list_sets_url)
+            error = "Error ('%s') resolving URL %s" % (resp["status"], url)
         elif not len(content) > 2:
-            response["error"] = "No sets received from URL: %s" % list_sets_url
-        else:
-            response["content"] = content
+            error = "No sets received from URL %s" %  url
 
-        return response
-               
-class ListVerbsFetcher(Fetcher):
+        return error, content
+
+class OAIVerbsFetcher(Fetcher):
     def __init__(self, profile):
-        super(ListVerbsFetcher, self).__init__(profile)
+        super(OAIVerbsFetcher, self).__init__(profile)
 
-    def request_list_sets(self):
-        list_sets_url = self.uri_base + "%s/oai.listsets.json?endpoint=%s" + \
+    def list_sets(self):
+        """Requests all sets via the ListSets verb
+
+           Returns an (error, content) tuple where error is None if the
+           request succeeds, the requested content is not empty and is
+           parseable, and content is a dictionary with setSpec as keys and
+           a dictionary with keys title and description as the values.
+        """
+        subresources = {}
+        list_sets_url = self.uri_base + "/oai.listsets.json?endpoint=" + \
                         self.endpoint_url
 
-        response = self.request_content_from(list_sets_url)
-        if response["error"] is None:
-            subresources = []
+        error, content = self.request_content_from(list_sets_url)
+        if error is None:
             try:
-                set_content = json.loads(content)
+                list_sets_content = json.loads(content)
             except ValueError:
-                response["error"] = "Error decoding content from URL: %s" % \
-                                    list_sets_url
-                return response
+                error = "Error decoding content from URL %s" % list_sets_url
+                return error, subresources
 
-            for s in set_content:
-                subresources.append(s[0])
+            for s in list_sets_content:
+                set = s[0]
+                subresources[set] = {}
+                subresources[set]["title"] = s[1]
+                if len(s) > 2:
+                    subresources[set]["description"] = s[2]
 
-            if subresources:
-                response["content"] = subresources
-            else:
-                response["error"] = "No sets received from URL %s" + \
-                                    list_sets_url
+            if not subresources:
+                error = "No sets received from URL %s" % list_sets_url
 
-        return response
+        return error, subresources
 
-    def request_list_records(self, url):
+    def list_records(self, url, params):
+        records = None
         list_records_url = self.uri_base + "/dpla-list-records?endpoint=" + url
 
-        response = self.request_content_from(list_records_url)
-        if response["error"] is None:
+        error, content = self.request_content_from(list_records_url, params)
+        if error is None:
             try:
                 records_content = json.loads(content)
             except ValueError:
-                response["error"] = "Error decoding content from URL: %s" % \
-                                    list_records_url
-                return response
+                error = "Error decoding content from URL %s" % list_records_url
+                return
 
             if not records_content.get("items"):
-                response["error"] = "No records received from URL: %s" % \
-                                    list_records_url
-            else:
-                response["content"] = content
+                error = "No records received from URL: %s" % list_records_url
 
-        return response
+        return error, records_content
 
-    def remove_blacklisted_subresources(self):
-        if self.blacklist:
-            subresources = set(self.subresources) - set(self.blacklist)
-            self.subresources = list(subresources)
+    def fetch_all_data(self):
+        response = {"error": None, "records": None}
 
-    def fetch_all_records(self):
-        # Fetch subresources, if need be
-        if not self.subresources:
-            response = self.request_list_sets()
-            if response.get("error") is not None:
-                yield response
-            else:
-                self.subresources = response.get("content")
+        # Fetch all sets
+        response["error"], sets = self.list_sets()
+        if response["error"] is not None:
+            self.subresources = []
+            yield response
+
+        # Set the subresources
+        if sets:
+            if not self.subresources:
+                self.subresources = sets
                 self.remove_blacklisted_subresources()
+            else:
+                for set in sets.keys():
+                    if set not in self.subresources:
+                        del sets[set]
+                self.subresources = sets
 
         # Fetch all records for each subresource
-        for subresource in self.subresources:
+        for subresource in self.subresources.keys():
             request_more = True
             resumption_token = ""
-            endpoint_url = self.endpoint_url + "&" + urlencode({"oaiset":
-                                                                subresource})
+            url = self.endpoint_url
+            params = {"oaiset": subresource}
+
+            # Flag to remove subresource if no records fetched
+            remove_subresource = True
 
             # Request records until a resumption token is not received
             while request_more:
                 if resumption_token:
-                    endpoint_url += "&" + urlencode({"resumption_token":
-                                                     resumption_token})
+                    params["resumption_token"] = resumption_token
                 
                 # Send request
-                response = self.request_list_records(endpoint_url)
-                if response.get("error") is not None:
+                response["error"], content = self.list_records(url, params)
+
+                if response["error"] is not None:
+                    # Stop requesting from this subresource
                     request_more = False
                 else:
+                    # Get resumption token
+                    remove_subresource = False
+                    response["records"] = content["items"]
+                    resumption_token = content.get("resumption_token")
                     request_more = (resumption_token is not None and
                                     len(resumption_token) > 0)
-                    response["content"] = content
 
                 yield response
 
+            if remove_subresource:
+                del self.subresources[subresource]
+
 class AbsoluteURLFetcher(Fetcher):
     def __init__(self, profile):
+        self.get_sets_url = profile.get("get_sets_url")
+        self.get_records_url = profile.get("get_records_url")
+        self.endpoint_url_params = profile.get("endpoint_url_params")
         super(AbsoluteURLFetcher, self).__init__(profile)
+
+    def nypl_request_subresources(self):
+        url = self.get_sets_url
+        error, content = self.request_content_from(url)
+        if error is not None:
+            return error, content
+
+        error, content = self.nypl_extract_content(content, url)
+        if error is not None:
+            return error, content
+
+        subresources = {}
+        for item in content["response"]:
+            if item == "collection":
+                for coll in content["response"][item]:
+                    if "uuid" in coll:
+                        subresources[coll["uuid"]] = {}
+                        subresources[coll["uuid"]]["title"] = coll["title"]
+
+        if not subresources:
+            error = "Error, no subresources from URL %s" % url
+
+        return error, subresources
+
+    def nypl_extract_content(self, content, url):
+        error = None
+        try:
+            parsed_content = ARC_PARSE(content)
+        except:
+            error = "Error parsing content from URL %s" % url
+            return error, content
+
+        content = parsed_content.get("nyplAPI")
+        if content is None:
+            error = "Error, there is no \"nyplAPI\" field in content from " \
+                    "URL %s" % url
+        elif exists(content, "response/headers/code") and \
+             getprop(content, "response/headers/code") != "200":
+            error = "Error, response code is not 200 for request to URL %s" % \
+                    url
+        return error, content
+
+    def request_subresources(self):
+        if self.provider == "nypl":
+            error, subresources = self.nypl_request_subresources()
+        elif self.provider.startswith("virginia"):
+            error, subresources = self.uva_request_subresources()
+        else:
+            error = "Error, provider does not support subresources"
+            subresources = []
+
+        return error, subresources
+        
+    def nypl_request_records(self, content):
+        error = None
+        total_pages = getprop(content, "request/totalPages")
+        current_page = getprop(content, "request/page")
+        request_more = total_pages == current_page
+
+        records = []
+        for item in getprop(content, "response/capture"):
+            record_url = self.get_records_url.format(item["uuid"])
+            error, content = self.request_content_from(record_url)
+            if error is None:
+                error, content = self.nypl_extract_content(content, record_url)
+
+            if error is None:
+                record = getprop(content, "response/mods")
+                record["_id"] = item["uuid"]
+                record["tmp_image_id"] = item.get("itemLink")
+                record["tmp_high_res_link"] = item.get("highResLink")
+                records.append(record)
+
+            if error is not None:
+                return error, content, request_more
+
+        return error, content, request_more
+
+    def uva_request_subresources(self):
+        """Creates the subresources dictionary from self.collection_titles
+        """
+        subresources = self.collection_titles
+        return None, subresources
+
+    def uva_extract_content(self, content, url):
+        error = None
+        try:
+            content = ARC_PARSE(content)
+        except:
+            error = "Error parsing content from URL %s" % url
+
+        return error, content
+
+    def uva_extract_records(self, content, url):
+        error = None
+        records = []
+
+        # Handle "mods:<key>" in UVA book collection
+        key_prefix = ""
+        if "mods:mods" in content:
+            key_prefix = "mods:"
+
+        if key_prefix + "mods" in content:
+            item = content[key_prefix + "mods"]
+            for _id_dict in iterify(item[key_prefix + "identifier"]):
+                if _id_dict["type"] == "uri":
+                    item["_id"] = _id_dict["#text"]
+                    records.append(item)
+
+        if not records:
+            error = "Error, no records found in content from URL %s" % url
+
+        yield error, records
+
+    def uva_request_records(self, content):
+        error = None
+
+        for item in content["mets:mets"]:
+            if "mets:dmdSec" in item:
+                records = content["mets:mets"][item]
+                for rec in records:
+                    if not rec["ID"].startswith("collection-description-mods"):
+                        url = rec["mets:mdRef"]["xlink:href"]
+                        error, cont = self.request_content_from(url)
+                        if error is not None:
+                            yield error, cont
+                        else:
+                            error, cont = self.uva_extract_content(cont, url)
+                            if error is not None:
+                                yield error, cont
+                            else:
+                                for error, recs in \
+                                    self.uva_extract_records(cont, url):
+                                    yield error, recs
+
+    def fetch_all_data(self):
+        response = {"error": None, "records": None}
+
+        if not self.subresources:
+            response["error"], self.subresources = self.request_subresources()
+            if response["error"] is not None:
+                yield response
+            else:
+                self.remove_blacklisted_subresources()
+
+        # Flag to remove subresource if no records fetched
+        remove_subresource = True
+
+        for subresource in self.subresources.keys():
+            request_more = True
+            url = self.endpoint_url.format(subresource)
+            params = self.endpoint_url_params
+
+            while request_more:
+                response["error"], content = self.request_content_from(url,
+                                                                       params)
+
+                if response["error"] is not None:
+                    # Stop requesting from this subresource
+                    request_more = False
+                    yield response
+                    continue
+
+                # NYPL records
+                if self.provider == "nypl":
+                    error, content = self.nypl_extract_content(content, url)
+                    if error is not None:
+                        request_more = False
+                        reponse["error"] = error
+                    else:
+                        params["page"] += 1
+                        (response["error"], response["records"],
+                         request_more) = self.nypl_request_records(content)
+
+                        if response["error"] is not None:
+                            yield response
+                            continue
+                        else:
+                            remove_subresource = False
+
+                    yield response
+                # UVA records
+                elif self.provider.startswith("virginia"):
+                    # UVA will not use the request_more flag
+                    request_more = False
+
+                    error, content = self.uva_extract_content(content, url)
+                    if error is not None:
+                        response["error"] = error
+                    else:
+                        for response["error"], response["records"] in \
+                            self.uva_request_records(content):
+                                yield response
+                            
+        if remove_subresource:
+            self.subrsources.remove(subresource)
+
 
 class FileFetcher(Fetcher):
     def __init__(self, profile):
@@ -147,53 +403,11 @@ class IA(Fetcher):
         self.removed_enrichments_rec = profile.get("removed_enrichments_rec")
         super(IA, self).__init__(profile)
 
-class ARC(Fetcher):
-    def __init__(self, profile):
-        """Set ARC specific attributes"""
-        super(ARC, self).__init__(profile)
-
-class OAI(Fetcher):
-    def __init__(self, profile):
-        """Set OAI specific attributes"""
-        super(OAI, self).__init__(profile)
-
-class METS(Fetcher):
-    def __init__(self, profile):
-        """Set METS specific attributes"""
-        super(METS, self).__init__(profile)
-
-class EDAN(Fetcher):
-    def __init__(self, profile):
-        """Set EDAN specific attributes"""
-        super(EDAN, self).__init__(profile)
-
-class NYPL(Fetcher):
-    def __init__(self, profile):
-        """Set NYPL specific attributes"""
-        self.get_record_url = profile.get("get_record_url")
-        super(NYPL, self).__init__(profile)
-
-class MARC(Fetcher):
-    def __init__(self, profile):
-        """Set MARC specific attributes"""
-        super(MARC, self).__init__(profile)
-
-class PRIMO(Fetcher):
-    def __init__(self, profile):
-        """Set PRIMO specific attributes"""
-        self.bulk_size = profile.get("bulk_size")
-        super(PRIMO, self).__init__(profile)
-
 def get_fetcher(profile_path):
     fetcher_types = {
-        'ia': lambda p: IA(p),
-        'arc': lambda p: ARC(p),
-        'oai': lambda p: OAI(p),
-        'mets': lambda p: METS(p),
-        'edan': lambda p: EDAN(p),
-        'nypl': lambda p: NYPL(p),
-        'marc': lambda p: MARC(p),
-        'primo': lambda p: PRIMO(p),
+        'file': lambda p: FileFetcher(p),
+        'oai_verbs': lambda p: OAIVerbsFetcher(p),
+        'absolute_url': lambda p: AbsoluteURLFetcher(p),
     }
 
     with open(profile_path, "r") as f:
