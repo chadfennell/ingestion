@@ -1,9 +1,36 @@
 {
-    "list_sets": "/oai.listsets.json?endpoint=http://imagesearch.library.illinois.edu/cgi-bin/oai.exe",
+    "name": "uiuc", 
+    "type": "oai_verbs",
+    "endpoint_url": "http://imagesearch.library.illinois.edu/cgi-bin/oai.exe",
+    "subresources": [
+        "kennedy",
+        "olin",
+        "cartoons",
+        "wwposters",
+        "maps",
+        "exlibris",
+        "africanmaps",
+        "motley",
+        "actors",
+        "cubuilding",
+        "tdc",
+        "chicago",
+        "sousa",
+        "bronze",
+        "ALA",
+        "reston",
+        "koopman",
+        "blueprints",
+        "cannon",
+        "sanborn"
+    ], 
+    "contributor": {
+        "@id": "http://dp.la/api/contributor/uiuc",
+        "name": "University of Illinois at Urbana-Champaign"
+    },
     "enrichments_coll": [
         "/oai-set-name?sets_service=/oai.listsets.json?endpoint=http://imagesearch.library.illinois.edu/cgi-bin/oai.exe"
     ], 
-    "name": "uiuc", 
     "enrichments_rec": [
         "/select-id",
         "/oai-to-dpla",
@@ -31,33 +58,5 @@
         "/contentdm_identify_object",
         "/unset_prop?prop=dataProvider",
         "/copy_prop?prop=provider%2Fname&to_prop=dataProvider&create=True"
-    ], 
-    "subresources": [
-        "kennedy",
-        "olin",
-        "cartoons",
-        "wwposters",
-        "maps",
-        "exlibris",
-        "africanmaps",
-        "motley",
-        "actors",
-        "cubuilding",
-        "tdc",
-        "chicago",
-        "sousa",
-        "bronze",
-        "ALA",
-        "reston",
-        "koopman",
-        "blueprints",
-        "cannon",
-        "sanborn"
-    ], 
-    "contributor": {
-        "@id": "http://dp.la/api/contributor/uiuc",
-        "name": "University of Illinois at Urbana-Champaign"
-    }, 
-    "type": "oai", 
-    "endpoint_url": "/dpla-list-records?endpoint=http://imagesearch.library.illinois.edu/cgi-bin/oai.exe&oaiset="
+    ]
 }

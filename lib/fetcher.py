@@ -53,7 +53,8 @@ class Fetcher(object):
     def remove_blacklisted_subresources(self):
         if self.blacklist:
             for set in self.blacklist:
-                del self.subresources[set]
+                if set in self.subresources:
+                    del self.subresources[set]
 
     def request_content_from(self, url, params={}, attempts=5):
         error, content = None, None
@@ -122,36 +123,44 @@ class OAIVerbsFetcher(Fetcher):
             try:
                 records_content = json.loads(content)
             except ValueError:
-                error = "Error decoding content from URL %s" % list_records_url
+                error = "Error decoding content from URL %s with params %s" % \
+                        (list_records_url, params)
                 return
 
             if not records_content.get("items"):
-                error = "No records received from URL: %s" % list_records_url
+                error = "No records received from URL %s with params %s" % \
+                        (list_records_url, params)
 
         return error, records_content
 
     def fetch_all_data(self):
         response = {"error": None, "records": None}
 
-        # Fetch all sets
-        response["error"], sets = self.list_sets()
-        if response["error"] is not None:
-            self.subresources = []
-            yield response
+        if self.subresources == "NotSupported":
+            # In this case sets are not supported
+            subresource_ids = ""
+        else:
+            # Fetch all sets
+            response["error"], sets = self.list_sets()
+            if response["error"] is not None:
+                self.subresources = {}
+                yield response
 
-        # Set the subresources
-        if sets:
-            if not self.subresources:
-                self.subresources = sets
-                self.remove_blacklisted_subresources()
-            else:
-                for set in sets.keys():
-                    if set not in self.subresources:
-                        del sets[set]
-                self.subresources = sets
+            # Set the subresources
+            if sets:
+                if not self.subresources:
+                    self.subresources = sets
+                    self.remove_blacklisted_subresources()
+                else:
+                    for set in sets.keys():
+                        if set not in self.subresources:
+                            del sets[set]
+                    self.subresources = sets
+
+                subresource_ids = self.subresources.keys()
 
         # Fetch all records for each subresource
-        for subresource in self.subresources.keys():
+        for subresource in subresource_ids:
             request_more = True
             resumption_token = ""
             url = self.endpoint_url
@@ -391,17 +400,6 @@ class AbsoluteURLFetcher(Fetcher):
 class FileFetcher(Fetcher):
     def __init__(self, profile):
         super(FileFetcher, self).__init__(profile)
-
-class IA(Fetcher):
-    def __init__(self, profile):
-        """Set IA specific attributes"""
-        self.prefix_dc = profile.get("prefix_dc")
-        self.prefix_meta = profile.get("prefix_meta")
-        self.shown_at_url = profile.get("shown_at_url")
-        self.get_file_url = profile.get("get_file_url")
-        self.prefix_files = profile.get("prefix_files")
-        self.removed_enrichments_rec = profile.get("removed_enrichments_rec")
-        super(IA, self).__init__(profile)
 
 def get_fetcher(profile_path):
     fetcher_types = {

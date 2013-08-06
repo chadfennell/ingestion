@@ -59,8 +59,9 @@ def main(argv):
                 f.write(json.dumps(response["records"]))
 
     # Write collections to file
-    if fetcher.subresources:
-        filename = os.path.join(fetch_dir, hash(str(fetcher.subresources)))
+    if fetcher.subresources != "NotSupported":
+        h = hash(str(fetcher.subresources.keys()))
+        filename = os.path.join(fetch_dir, h)
         with open(filename, "w") as f:
             f.write(create_subresources_json())
 
