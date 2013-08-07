@@ -100,6 +100,7 @@ def test_absolute_url_fetcher_uva1():
     count = 0
     for response in fetcher.fetch_all_data():
         count += 1
+        print response.get("error")
         assert response.get("error") is None
         assert response.get("records") is not None
         if count == 5:
@@ -122,10 +123,10 @@ def test_absolute_url_fetcher_uva2():
 def test_all_oai_verb_fetchers():
     for profile in os.listdir("profiles"):
         profile_path = "profiles/" + profile
-        print profile_path
         with open(profile_path, "r") as f:
             prof = json.loads(f.read())
         if prof.get("type") == "oai_verbs":
+            print profile_path
             fetcher =  get_fetcher(profile_path)
             fetcher.uri_base = uri_base
             assert fetcher.__class__.__name__ == "OAIVerbsFetcher"
@@ -141,7 +142,21 @@ def test_all_oai_verb_fetchers():
                 break
 
 def test_all_absolute_url_fetchers():
-    pass
+    for profile in os.listdir("profiles"):
+        profile_path = "profiles/" + profile
+        with open(profile_path, "r") as f:
+            prof = json.loads(f.read())
+        if prof.get("type") == "absolute_url":
+            print profile_path
+            fetcher =  get_fetcher(profile_path)
+            fetcher.uri_base = uri_base
+            assert fetcher.__class__.__name__ == "AbsoluteURLFetcher"
+
+            for response in fetcher.fetch_all_data():
+                print response.get("error")
+                assert response.get("error") is None
+                assert response.get("records") is not None
+                break
 
 def test_all_file_fetchers():
     pass

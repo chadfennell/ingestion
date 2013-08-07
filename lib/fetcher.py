@@ -19,8 +19,8 @@ def getprop(obj, path):
 
 def iterify(iterable):
     '''
-Treat iterating over a single item or an interator seamlessly.
-'''
+    Treat iterating over a single item or an interator seamlessly.
+    '''
     if (isinstance(iterable, basestring) \
         or isinstance(iterable, dict)):
         iterable = [iterable]
@@ -138,7 +138,7 @@ class OAIVerbsFetcher(Fetcher):
 
         if self.subresources == "NotSupported":
             # In this case sets are not supported
-            subresource_ids = ""
+            self.subresources = {}
         else:
             # Fetch all sets
             response["error"], sets = self.list_sets()
@@ -157,10 +157,8 @@ class OAIVerbsFetcher(Fetcher):
                             del sets[set]
                     self.subresources = sets
 
-                subresource_ids = self.subresources.keys()
-
         # Fetch all records for each subresource
-        for subresource in subresource_ids:
+        for subresource in self.subresources.keys():
             request_more = True
             resumption_token = ""
             url = self.endpoint_url
@@ -200,13 +198,14 @@ class AbsoluteURLFetcher(Fetcher):
         self.endpoint_url_params = profile.get("endpoint_url_params")
         super(AbsoluteURLFetcher, self).__init__(profile)
 
+    # NYPL-specific methods
     def nypl_request_subresources(self):
         url = self.get_sets_url
         error, content = self.request_content_from(url)
         if error is not None:
             return error, content
 
-        error, content = self.nypl_extract_content(content, url)
+        error, content = self.extract_ARC_content(content, url)
         if error is not None:
             return error, content
 
@@ -223,7 +222,7 @@ class AbsoluteURLFetcher(Fetcher):
 
         return error, subresources
 
-    def nypl_extract_content(self, content, url):
+    def nypl_extract_ARC_content(self, content, url):
         error = None
         try:
             parsed_content = ARC_PARSE(content)
@@ -241,17 +240,6 @@ class AbsoluteURLFetcher(Fetcher):
                     url
         return error, content
 
-    def request_subresources(self):
-        if self.provider == "nypl":
-            error, subresources = self.nypl_request_subresources()
-        elif self.provider.startswith("virginia"):
-            error, subresources = self.uva_request_subresources()
-        else:
-            error = "Error, provider does not support subresources"
-            subresources = []
-
-        return error, subresources
-        
     def nypl_request_records(self, content):
         error = None
         total_pages = getprop(content, "request/totalPages")
@@ -263,7 +251,7 @@ class AbsoluteURLFetcher(Fetcher):
             record_url = self.get_records_url.format(item["uuid"])
             error, content = self.request_content_from(record_url)
             if error is None:
-                error, content = self.nypl_extract_content(content, record_url)
+                error, content = self.extract_ARC_content(content, record_url)
 
             if error is None:
                 record = getprop(content, "response/mods")
@@ -277,20 +265,13 @@ class AbsoluteURLFetcher(Fetcher):
 
         return error, content, request_more
 
+    # UVA-specific methods
     def uva_request_subresources(self):
         """Creates the subresources dictionary from self.collection_titles
         """
         subresources = self.collection_titles
         return None, subresources
 
-    def uva_extract_content(self, content, url):
-        error = None
-        try:
-            content = ARC_PARSE(content)
-        except:
-            error = "Error parsing content from URL %s" % url
-
-        return error, content
 
     def uva_extract_records(self, content, url):
         error = None
@@ -326,7 +307,7 @@ class AbsoluteURLFetcher(Fetcher):
                         if error is not None:
                             yield error, cont
                         else:
-                            error, cont = self.uva_extract_content(cont, url)
+                            error, cont = self.extract_ARC_content(cont, url)
                             if error is not None:
                                 yield error, cont
                             else:
@@ -334,24 +315,64 @@ class AbsoluteURLFetcher(Fetcher):
                                     self.uva_extract_records(cont, url):
                                     yield error, recs
 
+    # MWDL-specific methods
+    def mwdl_extract_records(self, content):
+        total_records = getprop(content,
+                                "SEGMENTS/JAGROOT/RESULT/DOCSET/TOTALHITS")
+        records = getprop(content, "SEGMENTS/JAGROOT/RESULT/DOCSET/DOC")
+
+        records = iterify(records)
+        for record in records:
+            record["_id"] = getprop(record, "PrimoNMBib/record/control/recordid")
+
+        return total_records, records
+
+    # Non provider-specific methods
+    def extract_ARC_content(self, content, url):
+        if self.provider == "nypl":
+            return self.nypl_extract_ARC_content(content, url)
+        else:
+            error = None
+            try:
+                content = ARC_PARSE(content)
+            except:
+                error = "Error parsing content from URL %s" % url
+
+            return error, content
+
+    def request_subresources(self):
+        if self.provider == "nypl":
+            error, subresources = self.nypl_request_subresources()
+        elif self.provider.startswith("virginia"):
+            error, subresources = self.uva_request_subresources()
+        else:
+            error = "Error, provider does not support subresources"
+            subresources = []
+
+        return error, subresources
+
     def fetch_all_data(self):
         response = {"error": None, "records": None}
 
-        if not self.subresources:
+        if self.subresources == "NotSupported":
+            self.subresources = {"": None}
+        elif not self.subresources:
             response["error"], self.subresources = self.request_subresources()
             if response["error"] is not None:
+                self.subresources = {}
                 yield response
             else:
                 self.remove_blacklisted_subresources()
 
-        # Flag to remove subresource if no records fetched
-        remove_subresource = True
-
         for subresource in self.subresources.keys():
             request_more = True
-            url = self.endpoint_url.format(subresource)
+            if subresource:
+                url = self.endpoint_url.format(subresource)
+            else:
+                url = self.endpoint_url
             params = self.endpoint_url_params
 
+            count = 0 # To be used by MWDL
             while request_more:
                 response["error"], content = self.request_content_from(url,
                                                                        params)
@@ -362,13 +383,15 @@ class AbsoluteURLFetcher(Fetcher):
                     yield response
                     continue
 
-                # NYPL records
-                if self.provider == "nypl":
-                    error, content = self.nypl_extract_content(content, url)
-                    if error is not None:
-                        request_more = False
-                        reponse["error"] = error
-                    else:
+                response["error"], content = self.extract_ARC_content(content,
+                                                                      url)
+                if response["error"] is not None:
+                    request_more = False
+                    yield response
+                    continue
+                else:
+                    # NYPL records
+                    if self.provider == "nypl":
                         params["page"] += 1
                         (response["error"], response["records"],
                          request_more) = self.nypl_request_records(content)
@@ -377,25 +400,24 @@ class AbsoluteURLFetcher(Fetcher):
                             yield response
                             continue
                         else:
-                            remove_subresource = False
+                            yield response
+                    # UVA records
+                    elif self.provider.startswith("virginia"):
+                        # UVA will not use the request_more flag
+                        request_more = False
 
-                    yield response
-                # UVA records
-                elif self.provider.startswith("virginia"):
-                    # UVA will not use the request_more flag
-                    request_more = False
-
-                    error, content = self.uva_extract_content(content, url)
-                    if error is not None:
-                        response["error"] = error
-                    else:
                         for response["error"], response["records"] in \
                             self.uva_request_records(content):
                                 yield response
-                            
-        if remove_subresource:
-            self.subrsources.remove(subresource)
-
+                    # MWDL records
+                    elif self.provider == "mwdl":
+                        total_records, response["records"] = \
+                            self.mwdl_extract_records(content)
+                        params["indx"] += len(response["records"])
+                        count += params["indx"]
+                        if count >= total_records:
+                            request_more = False
+                        yield response
 
 class FileFetcher(Fetcher):
     def __init__(self, profile):
