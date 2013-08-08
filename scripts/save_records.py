@@ -67,9 +67,8 @@ def main(argv):
                 break
 
         # Save
-        resp = couch.process_and_post_to_dpla(data, ingestion_doc)
+        resp, error_msg = couch.process_and_post_to_dpla(data, ingestion_doc)
         if resp == -1:
-            error_msg = "Error saving records from " + filename
             break
         else:
             print "Saved records from file " + filename

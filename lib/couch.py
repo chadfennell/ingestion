@@ -448,6 +448,9 @@ class Couch(object):
         harvested_docs - A dictionary with the doc "_id" as the key and the
                          document to be inserted in CouchDB as the value
         ingestion_doc_id -  The "_id" of the ingestion document
+
+        Returns a tuple (status, error_msg) where status is -1 for an error or
+        0 otherwise
         """
         provider = ingestion_doc["provider"]
         ingestion_sequence = ingestion_doc["ingestionSequence"]
@@ -485,11 +488,29 @@ class Couch(object):
                                    "provider": provider,
                                    "ingestionSequence": ingestion_sequence})
 
-        self._bulk_post_to(self.dashboard_db, added_docs + changed_docs)
-        self._update_ingestion_doc_counts(ingestion_doc,
-                                          countAdded=len(added_docs),
-                                          countChanged=len(changed_docs))
-        self._bulk_post_to(self.dpla_db, harvested_docs.values())
+        
+        status = -1
+        error_msg = None
+        try:
+            self._bulk_post_to(self.dashboard_db, added_docs + changed_docs)
+        except:
+            error_msg = "Error posting to the dashboard database"
+            return (status, error_msg)
+        try:
+            self._update_ingestion_doc_counts(ingestion_doc,
+                                              countAdded=len(added_docs),
+                                              countChanged=len(changed_docs))
+        except:
+            error_msg = "Error updating ingestion document counts"
+            return (status, error_msg)
+        try:
+            self._bulk_post_to(self.dpla_db, harvested_docs.values())
+        except:
+            error_msg = "Error posting to the dpla database"
+            return (status, error_msg)
+
+        status = 0
+        return (status, error_msg)
 
     def rollback(self, provider, ingest_sequence):
         """ Rolls back the provider documents by:
