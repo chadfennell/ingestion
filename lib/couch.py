@@ -111,7 +111,7 @@ class Couch(object):
                 build_time = (time.time() - start)/60
                 print >> sys.stderr, "Completed in %s minutes" % build_time
 
-    def _update_ingestion_doc(self, ingestion_doc, **kwargs):
+    def update_ingestion_doc(self, ingestion_doc, **kwargs):
         for prop, value in kwargs.items():
             setprop(ingestion_doc, prop, value)
         self.dashboard_db.save(ingestion_doc)
@@ -292,32 +292,32 @@ class Couch(object):
         resp = db.update(docs, **options)
         self.logger.debug("%s database response: %s" % (db.name, resp))
 
-    def _create_ingestion_document(self, provider, ingestion_sequence,
-                                   uri_base, profile_path):
+    def _create_ingestion_document(self, provider, uri_base, profile_path):
         """Creates and returns an ingestion document for the provider.
         """
+
         ingestion_doc = {
             "provider": provider,
             "type": "ingestion",
-            "ingestionSequence": ingestion_sequence,
+            "ingestionSequence": None,
             "ingestDate": datetime.now().isoformat(),
             "countAdded": 0,
             "countChanged": 0,
             "countDeleted": 0,
             "uri_base": uri_base,
             "profile_path": profile_path,
-            "fetched_data_path": None,
-            "enriched_data_path": None,
             "fetch_process": {
                 "status": None,
                 "start_time": None,
                 "end_time": None,
+                "data_dir": None,
                 "error": None
             },
             "enrich_process": {
                 "status": None,
                 "start_time": None,
                 "end_time": None,
+                "data_dir": None,
                 "error": None
             },
             "save_process": {
@@ -333,6 +333,15 @@ class Couch(object):
                 "error": None
             }
         }
+        # Set the ingestion sequence
+        latest_ingestion_doc = self._get_last_ingestion_doc_for(provider)
+        if latest_ingestion_doc is None:
+            ingestion_sequence = 1
+        else:
+            ingestion_sequence = 1 + latest_ingestion_doc["ingestionSequence"]
+        ingestion_doc["ingestionSequence"] = ingestion_sequence
+
+        # Save the ingestion document and get its ID
         ingestion_doc_id = self.dashboard_db.save(ingestion_doc)[0]
 
         return ingestion_doc_id
@@ -378,7 +387,7 @@ class Couch(object):
         ingestion_doc_id = self.dashboard_db.save(ingestion_doc)[0]
         return ingestion_doc_id
 
-    def _process_deleted_docs(self, ingestion_doc):
+    def process_deleted_docs(self, ingestion_doc):
         """Deletes any provider document whose ingestionSequence equals the
            previous ingestion's ingestionSequence, adds the deleted document id
            to the dashboard database, and updates the current ingestion

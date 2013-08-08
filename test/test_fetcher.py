@@ -7,7 +7,7 @@ from server_support import server
 from server_support import print_error_log
 from amara.thirdparty import json
 from amara.thirdparty import httplib2
-from dplaingestion.fetcher import get_fetcher
+from dplaingestion.fetcher import create_fetcher
 
 # TODO:
 # We should create our own data feed so as not to rely on a provider feed. 
@@ -24,7 +24,7 @@ scdl_all_subresources = ["gmb", "ctm", "cfb", "spg", "jfb", "jbt", "pre",
 
 def test_oai_fetcher_valid_subresource():
     profile_path = "profiles/clemson.pjs"
-    fetcher = get_fetcher(profile_path)
+    fetcher = create_fetcher(profile_path, uri_base)
     fetcher.uri_base = uri_base
     assert fetcher.__class__.__name__ == "OAIVerbsFetcher"
 
@@ -37,7 +37,7 @@ def test_oai_fetcher_valid_subresource():
 
 def test_oai_fetcher_invalid_subresource():
     profile_path = "profiles/clemson.pjs"
-    fetcher = get_fetcher(profile_path)
+    fetcher = create_fetcher(profile_path, uri_base)
     fetcher.uri_base = uri_base
     assert fetcher.__class__.__name__ == "OAIVerbsFetcher"
 
@@ -50,7 +50,7 @@ def test_oai_fetcher_invalid_subresource():
 
 def test_oai_fetcher_all_subresources():
     profile_path = "profiles/clemson.pjs"
-    fetcher = get_fetcher(profile_path)
+    fetcher = create_fetcher(profile_path, uri_base)
     fetcher.uri_base = uri_base
     assert fetcher.__class__.__name__ == "OAIVerbsFetcher"
 
@@ -64,7 +64,7 @@ def test_oai_fetcher_all_subresources():
 
 def test_oai_fetcher_with_blacklist():
     profile_path = "profiles/clemson.pjs"
-    fetcher = get_fetcher(profile_path)
+    fetcher = create_fetcher(profile_path, uri_base)
     fetcher.uri_base = uri_base
     assert fetcher.__class__.__name__ == "OAIVerbsFetcher"
 
@@ -79,7 +79,7 @@ def test_oai_fetcher_with_blacklist():
 
 def test_absolute_url_fetcher_nypl():
     profile_path = "profiles/nypl.pjs"
-    fetcher =  get_fetcher(profile_path)
+    fetcher =  create_fetcher(profile_path, uri_base)
     fetcher.uri_base = uri_base
     assert fetcher.__class__.__name__ == "AbsoluteURLFetcher"
 
@@ -93,7 +93,7 @@ def test_absolute_url_fetcher_nypl():
 
 def test_absolute_url_fetcher_uva1():
     profile_path = "profiles/virginia.pjs"
-    fetcher =  get_fetcher(profile_path)
+    fetcher =  create_fetcher(profile_path, uri_base)
     fetcher.uri_base = uri_base
     assert fetcher.__class__.__name__ == "AbsoluteURLFetcher"
 
@@ -108,7 +108,7 @@ def test_absolute_url_fetcher_uva1():
 
 def test_absolute_url_fetcher_uva2():
     profile_path = "profiles/virginia_books.pjs"
-    fetcher =  get_fetcher(profile_path)
+    fetcher =  create_fetcher(profile_path, uri_base)
     fetcher.uri_base = uri_base
     assert fetcher.__class__.__name__ == "AbsoluteURLFetcher"
 
@@ -127,7 +127,7 @@ def test_all_oai_verb_fetchers():
             prof = json.loads(f.read())
         if prof.get("type") == "oai_verbs":
             print profile_path
-            fetcher =  get_fetcher(profile_path)
+            fetcher =  create_fetcher(profile_path, uri_base)
             fetcher.uri_base = uri_base
             assert fetcher.__class__.__name__ == "OAIVerbsFetcher"
 
@@ -148,7 +148,7 @@ def test_all_absolute_url_fetchers():
             prof = json.loads(f.read())
         if prof.get("type") == "absolute_url":
             print profile_path
-            fetcher =  get_fetcher(profile_path)
+            fetcher =  create_fetcher(profile_path, uri_base)
             fetcher.uri_base = uri_base
             assert fetcher.__class__.__name__ == "AbsoluteURLFetcher"
 

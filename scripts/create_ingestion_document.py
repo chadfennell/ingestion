@@ -39,17 +39,13 @@ def main(argv):
 
     couch = Couch()
     latest_ingestion_doc = couch._get_last_ingestion_doc_for(provider)
-    if latest_ingestion_doc is None:
-        ingest_sequence = 1
-    elif getprop(latest_ingestion_doc, "delete_process/status") == "complete":
-        ingest_sequence = 1 + \
-                          getprop(latest_ingestion_doc, "ingestionSequence")
-    else:
-        # TODO: Handle case where previous ingestion did not complete
-        return
+    if latest_ingestion_doc and \
+       getprop(latest_ingestion_doc, "delete_process/status") != "complete":
+        # Last ingestion did not complete
+        print "Error, last ingestion did not complete"
+        return -1
 
     ingestion_document_id = couch._create_ingestion_document(provider,
-                                                             ingest_sequence,
                                                              uri_base,
                                                              args.profile_path)
 

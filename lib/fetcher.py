@@ -225,7 +225,7 @@ class AbsoluteURLFetcher(Fetcher):
         self.get_sets_url = profile.get("get_sets_url")
         self.get_records_url = profile.get("get_records_url")
         self.endpoint_url_params = profile.get("endpoint_url_params")
-        super(AbsoluteURLFetcher, self).__init__(profile)
+        super(AbsoluteURLFetcher, self).__init__(profile, uri_base)
 
     # NYPL-specific methods
     def nypl_request_subresources(self):

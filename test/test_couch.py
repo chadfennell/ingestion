@@ -91,13 +91,19 @@ class CouchTest(Couch):
                 content = json.load(f)
         else:
             content = file
-        
-        ingestion_doc_id = self.create_ingestion_doc_and_backup_db(provider)
+
+        uri_base = server()[:-1]
+        ingestion_doc_id = self._create_ingestion_document(provider, uri_base,
+                                                           "profiles/clemson.pjs")
+        ingestion_doc = self.dashboard_db[ingestion_doc_id]
+
         url = server() + "enrich"
-        resp, content = H.request(url, "POST", body=json.dumps(content), headers=headers)
+        body = json.dumps(content)
+        resp, content = H.request(url, "POST", body=body, headers=headers)
         docs = json.loads(content)
-        self.process_and_post_to_dpla(docs, ingestion_doc_id)
-        self.process_deleted_docs(ingestion_doc_id)
+        self._back_up_data(ingestion_doc)
+        self.process_and_post_to_dpla(docs, ingestion_doc)
+        self.process_deleted_docs(ingestion_doc)
         return ingestion_doc_id
 
 @nottest
@@ -244,14 +250,14 @@ def test_multiple_ingestions():
     data_deleted = copy.deepcopy(data)
     add_later = []
     for i in range(10):
-        add_later.append(data_deleted["items"].pop(2*i))
+        add_later.append(data_deleted["records"].pop(2*i))
 
     data_changed = copy.deepcopy(data_deleted)
     for i in range(5):
-        data_changed["items"][3*i]["title"] = "Changed"
+        data_changed["records"][3*i]["title"] = "Changed"
 
     data_added = copy.deepcopy(data_changed)
-    data_added["items"] += add_later
+    data_added["records"] += add_later
 
     first_ingestion_doc_id = couch.ingest(data, PROVIDER, json_content=True)
     dashboard_db_docs = [doc for doc in couch._query_all_docs(couch.dashboard_db)]

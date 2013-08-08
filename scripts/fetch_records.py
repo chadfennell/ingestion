@@ -42,7 +42,7 @@ def main(argv):
         "fetch_process/start_time": datetime.now().isoformat()
     }
     try:
-        couch._update_ingestion_doc(ingestion_doc, **kwargs)
+        couch.update_ingestion_doc(ingestion_doc, **kwargs)
     except:
         print "Error updating ingestion doc " + ingestion_document_id
         return -1
@@ -76,7 +76,7 @@ def main(argv):
         "fetch_process/end_time": datetime.now().isoformat()
     }
     try:
-        couch._update_ingestion_doc(ingestion_doc, **kwargs)
+        couch.update_ingestion_doc(ingestion_doc, **kwargs)
     except:
         print "Error updating ingestion doc " + ingestion_document_id
         return -1
