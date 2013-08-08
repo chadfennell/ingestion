@@ -12,6 +12,7 @@ except:
     from ordereddict import OrderedDict
 
 from dplaingestion.selector import exists
+from dplaingestion.selector import setprop
 from dplaingestion.selector import getprop as get_prop
 
 def getprop(obj, path):
@@ -38,10 +39,10 @@ class Fetcher(object):
     """The base class for all fetchers.
        Includes attributes and methods that are common to all types.
     """
-    def __init__(self, profile):
+    def __init__(self, profile, uri_base):
         """Set common attributes"""
+        self.uri_base = uri_base
         self.provider = profile.get("name")
-        self.uri_base = profile.get("uri_base")
         self.blacklist = profile.get("blacklist")
         self.contributor = profile.get("contributor")
         self.subresources = profile.get("subresources")
@@ -64,8 +65,8 @@ class Fetcher(object):
             else:
                 url += "?" + urlencode(params)
 
-        resp, content = self.http_handle.request(url)
         for i in range(attempts):
+            resp, content = self.http_handle.request(url)
             # Break if 2xx response status
             if resp["status"].startswith("2"):
                 break
@@ -79,8 +80,8 @@ class Fetcher(object):
         return error, content
 
 class OAIVerbsFetcher(Fetcher):
-    def __init__(self, profile):
-        super(OAIVerbsFetcher, self).__init__(profile)
+    def __init__(self, profile, uri_base):
+        super(OAIVerbsFetcher, self).__init__(profile, uri_base)
 
     def list_sets(self):
         """Requests all sets via the ListSets verb
@@ -103,11 +104,11 @@ class OAIVerbsFetcher(Fetcher):
                 return error, subresources
 
             for s in list_sets_content:
-                set = s[0]
-                subresources[set] = {}
-                subresources[set]["title"] = s[1]
-                if len(s) > 2:
-                    subresources[set]["description"] = s[2]
+                set = s["setSpec"]
+                subresources[set] = {"id": set}
+                subresources[set]["title"] = s["setName"]
+                if "setDescription" in set:
+                    subresources[set]["description"] = s["setDescription"]
 
             if not subresources:
                 error = "No sets received from URL %s" % list_sets_url
@@ -134,11 +135,34 @@ class OAIVerbsFetcher(Fetcher):
         return error, records_content
 
     def fetch_all_data(self):
-        response = {"error": None, "records": None}
+        """A generator to yeild batches of records along with the collection,
+           if any, the provider, and any errors encountered along the way. The
+           reponse dictionary has the following structure:
+
+            response = {
+                "error": <Any error encountered>,
+                "data": {
+                    "provider": <The provider>,
+                    "records": <The batch of records fetched>,
+                    "collection": {
+                        "title": <The collection title, if any>,
+                        "description": <The collection description, if any>
+                    }
+                }
+            }
+        """
+        response = {
+            "error": None,
+            "data": {
+                "provider": self.provider,
+                "records": None,
+                "collection": None
+            }
+        }
 
         if self.subresources == "NotSupported":
             # In this case sets are not supported
-            self.subresources = {}
+            self.subresources = ""
         else:
             # Fetch all sets
             response["error"], sets = self.list_sets()
@@ -159,6 +183,11 @@ class OAIVerbsFetcher(Fetcher):
 
         # Fetch all records for each subresource
         for subresource in self.subresources.keys():
+            print "Fetching records for subresource " + subresource
+            if not subresource == "":
+                setprop(response, "data/collection",
+                        self.subresources[subresource])
+        
             request_more = True
             resumption_token = ""
             url = self.endpoint_url
@@ -181,7 +210,7 @@ class OAIVerbsFetcher(Fetcher):
                 else:
                     # Get resumption token
                     remove_subresource = False
-                    response["records"] = content["items"]
+                    setprop(response, "data/records", content["items"])
                     resumption_token = content.get("resumption_token")
                     request_more = (resumption_token is not None and
                                     len(resumption_token) > 0)
@@ -192,7 +221,7 @@ class OAIVerbsFetcher(Fetcher):
                 del self.subresources[subresource]
 
 class AbsoluteURLFetcher(Fetcher):
-    def __init__(self, profile):
+    def __init__(self, profile, uri_base):
         self.get_sets_url = profile.get("get_sets_url")
         self.get_records_url = profile.get("get_records_url")
         self.endpoint_url_params = profile.get("endpoint_url_params")
@@ -420,19 +449,19 @@ class AbsoluteURLFetcher(Fetcher):
                         yield response
 
 class FileFetcher(Fetcher):
-    def __init__(self, profile):
-        super(FileFetcher, self).__init__(profile)
+    def __init__(self, profile, uri_base):
+        super(FileFetcher, self).__init__(profile, uri_base)
 
-def get_fetcher(profile_path):
+def create_fetcher(profile_path, uri_base):
     fetcher_types = {
-        'file': lambda p: FileFetcher(p),
-        'oai_verbs': lambda p: OAIVerbsFetcher(p),
-        'absolute_url': lambda p: AbsoluteURLFetcher(p),
+        'file': lambda p, u: FileFetcher(p, u),
+        'oai_verbs': lambda p, u: OAIVerbsFetcher(p, u),
+        'absolute_url': lambda p, u: AbsoluteURLFetcher(p, u),
     }
 
     with open(profile_path, "r") as f:
         profile = json.load(f)
     type = profile.get("type")
-    fetcher = fetcher_types.get(type)(profile)
+    fetcher = fetcher_types.get(type)(profile, uri_base)
 
     return fetcher

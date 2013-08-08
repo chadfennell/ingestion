@@ -16,8 +16,7 @@ def define_arguments():
     """Defines command line arguments for the current script"""
     parser = argparse.ArgumentParser()
     parser.add_argument("profile_path",
-                        help="The path to the profile(s) to be processed",
-                        nargs="+")
+                        help="The path to the profile to be processed")
 
     return parser
 
@@ -41,17 +40,18 @@ def main(argv):
     couch = Couch()
     latest_ingestion_doc = couch._get_last_ingestion_doc_for(provider)
     if latest_ingestion_doc is None:
-        ingestion_sequence = 1
+        ingest_sequence = 1
     elif getprop(latest_ingestion_doc, "delete_process/status") == "complete":
-        ingestion_sequence = 1 + \
-                             getprop(latest_ingestion_doc, "ingestionSequence")
+        ingest_sequence = 1 + \
+                          getprop(latest_ingestion_doc, "ingestionSequence")
     else:
         # TODO: Handle case where previous ingestion did not complete
         return
 
-    ingestion_document_id = couch.create_ingestion_document(provider,
-                                                            ingestion_sequence,
-                                                            uri_base)
+    ingestion_document_id = couch._create_ingestion_document(provider,
+                                                             ingest_sequence,
+                                                             uri_base,
+                                                             args.profile_path)
 
     return ingestion_document_id
 

@@ -3,7 +3,7 @@
 Script to enrich data from JSON files
 
 Usage:
-    $ python enrich_records.py ingesiton_document_id
+    $ python enrich_records.py ingestion_document_id
 """
 import os
 import sys
@@ -11,11 +11,15 @@ import tempfile
 import argparse
 from datetime import datetime
 from amara.thirdparty import json
+from amara.thirdparty import httplib2
 from dplaingestion.couch import Couch
 from dplaingestion.selector import getprop
 
+H = httplib2.Http('/tmp/.pollcache')
+H.force_exception_as_status_code = True
+
 def create_enrich_dir(provider):
-    return tempfile.mdktemp(provider)
+    return tempfile.mkdtemp("_" + provider)
 
 def define_arguments():
     """Defines command line arguments for the current script"""
@@ -42,31 +46,53 @@ def main(argv):
         "enrich_process/data_dir": enrich_dir,
         "enrich_process/start_time": datetime.now().isoformat()
     }
-    couch._update_ingestion_doc(ingestion_doc, kwargs)
+    try:
+        couch._update_ingestion_doc(ingestion_doc, **kwargs)
+    except:
+        print "Error updating ingestion document " + ingestion_document_id
+        return -1
 
-    error_msg = None
+    # Set the headers sent with the enrich request
+    with open(ingestion_doc["profile_path"], "r") as f:
+        profile = json.loads(f.read())
+    headers = {
+        "Source": ingestion_doc["provider"],
+        "Collection": "",
+        "Content-Type": "application/json",
+        "Pipeline-Rec": ",".join(profile["enrichments_rec"]),
+        "Pipeline-Coll": ",".join(profile["enrichments_coll"])
+    }
+
+    error_msg = []
     fetch_dir = getprop(ingestion_doc, "fetch_process/data_dir")
+    
+    print "Enriching records for " + ingestion_doc["provider"]
     for filename in os.listdir(fetch_dir):
-        filepath = os.join(fetch_dir, file)
+        filepath = os.path.join(fetch_dir, filename)
         with open(filepath, "r") as f:
             try:
-                data = json.loads(f)
+                data = json.loads(f.read())
             except:
                 error_msg.append("Error loading " + filepath)
                 continue
 
         # Enrich
-        resp, content = H.request("/enrich", json.dumps(data))
-        if resp != 200:
-            error_msg.append("Error enriching data from " + filepath)
+        print "Enriching file " + filename
+        enrich_path = ingestion_doc["uri_base"] + "/enrich"
+        resp, content = H.request(enrich_path, "POST", body=json.dumps(data),
+                                  headers=headers)
+        if not resp["status"].startswith("2"):
+            error_msg.append("Error (status %s) enriching data from %s" %
+                             (resp["status"], filepath))
             continue
 
         # Write enriched data to file
-        with open(os.join(enrich_dir, filename), "w") as f:
-            json.dumps(content, f)
+        with open(os.path.join(enrich_dir, filename), "w") as f:
+            f.write(content)
 
     # Update ingestion document
-    try os.rmdir(enrich_dir):
+    try:
+        os.rmdir(enrich_dir)
         # Error if enrich_dir was empty
         status = "error"
     except:
@@ -76,7 +102,11 @@ def main(argv):
         "enrich_process/error": error_msg,
         "enrich_process/end_time": datetime.now().isoformat()
     }
-    couch._update_ingestion_doc(ingestion_doc, kwargs)
+    try:
+        couch._update_ingestion_doc(ingestion_doc, **kwargs)
+    except:
+        print "Error updating ingestion document " + ingestion_document_id
+        return -1
 
     return 0 if status == "complete" else -1
 

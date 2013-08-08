@@ -7,11 +7,11 @@ Usage:
 """
 import sys
 import argparse
-from dplaingestion import create_ingestion_document
-from dplaingestion import fetch_records
-from dplaingestion import enrich_records
-from dplaingestion import save_records
-from dplaingestion import remove_deleted_records
+import create_ingestion_document
+import fetch_records
+import enrich_records
+import save_records
+import remove_deleted_records
 
 def define_arguments():
     """Defines command line arguments for the current script"""
@@ -19,7 +19,6 @@ def define_arguments():
     parser.add_argument("profile_path",
                         help="The path to the profile(s) to be processed",
                         nargs="+")
-
     return parser
 
 def main(argv):
@@ -28,31 +27,27 @@ def main(argv):
 
     for profile_path in args.profile_path:
         print "Creating ingestion document for profile %s" % profile_path
-        ingestion_doc_id = create_ingestion_document(profile_path)
+        ingestion_doc_id = create_ingestion_document.main([None, profile_path])
         if ingestion_doc_id is None:
             print "Error creating ingestion document"
             continue
 
-        print "Fetching records..."
-        resp = fetch_records(ingestion_doc_id)
+        resp = fetch_records.main([None, ingestion_doc_id])
         if not resp == 0:
             print "Error fetching records"
             continue
 
-        print "Enriching records..."
-        resp = enrich_records(ingestion_doc_id)
+        resp = enrich_records.main([None, ingestion_doc_id])
         if not resp == 0:
             print "Error enriching records"
             continue
 
-        print "Saving records..."
-        resp = save_records(ingestion_doc_id)
+        resp = save_records.main([None, ingestion_doc_id])
         if not resp == 0:
             print "Error saving records"
             continue
 
-        print "Removing deleted records..."
-        resp = remove_deleted_records(ingestion_doc_id) 
+        resp = remove_deleted_records.main([None, ingestion_doc_id]) 
         if not resp == 0:
             print "Error saving records..."
             continue

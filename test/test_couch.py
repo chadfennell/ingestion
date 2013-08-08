@@ -279,7 +279,7 @@ def test_multiple_ingestions():
     assert int(total_dashboard_docs_second) + 11 == int(total_dashboard_docs_third)
     # Fourth ingestion should have extra ingestion doc + 5 changed
     assert int(total_dashboard_docs_third) + 6 == int(total_dashboard_docs_fourth)
-    # Fifth ingesiton should have extra ingestion doc + 10 added
+    # Fifth ingestion should have extra ingestion doc + 10 added
     assert int(total_dashboard_docs_fourth) + 11 == int(total_dashboard_docs_fifth)
     
 

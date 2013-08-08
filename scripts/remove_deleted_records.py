@@ -36,9 +36,13 @@ def main(argv):
         "delete_process/status": "running",
         "delete_process/start_time": datetime.now().isoformat()
     }
-    couch._update_ingestion_doc(ingestion_doc, kwargs)
+    try:
+        couch._update_ingestion_doc(ingestion_doc, **kwargs)
+    except:
+        print "Error updating ingestion document " + ingestion_document_id
+        return -1
 
-    resp = couch._process_deleted_docs(ingestion_doc.id)
+    resp = couch._process_deleted_docs(ingestion_doc)
     if resp == -1:
         status = "error"
         error_msg = "Error deleting documents"
@@ -52,7 +56,11 @@ def main(argv):
         "delete_process/error": error_msg,
         "delete_process/end_time": datetime.now().isoformat()
     }
-    couch._update_ingestion_doc(ingestion_doc, kwargs)
+    try:
+        couch._update_ingestion_doc(ingestion_doc, **kwargs)
+    except:
+        print "Error updating ingestion document " + ingestion_document_id
+        return -1
 
     return 0 if status == "complete" else -1
 

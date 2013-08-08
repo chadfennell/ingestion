@@ -36,10 +36,15 @@ def main(argv):
         "save_process/status": "running",
         "save_process/start_time": datetime.now().isoformat()
     }
-    couch._update_ingestion_doc(ingestion_doc, kwargs)
+    try:
+        couch._update_ingestion_doc(ingestion_doc, **kwargs)
+    except:
+        print "Error updating ingestion document " + ingestion_document_id
+        return -1
 
     # Back up provider data
-    resp = couch.back_up_data_for(ingestion_doc["provider"])
+    resp = couch._back_up_data(ingestion_doc)
+
     if resp == -1:
         # Fatal error, do not continue with save process
         kwargs = {
@@ -47,24 +52,27 @@ def main(argv):
             "save_process/end_time": datetime.now().isoformat(),
             "save_process/error": "Error backing up DPLA records"
         }
-        couch._update_ingestion_doc(ingestion_doc, kwargs)
-        return -1 
+        couch._update_ingestion_doc(ingestion_doc, **kwargs)
+        return resp
 
     error_msg = None
     enrich_dir = getprop(ingestion_doc, "enrich_process/data_dir")
     for file in os.listdir(enrich_dir):
-        filename = os.join(enrich_dir, file)
+        filename = os.path.join(enrich_dir, file)
         with open(filename, "r") as f:
             try:
-                data = json.loads(f)
+                data = json.loads(f.read())
             except:
                 error_msg = "Error loading " + filename
                 break
 
         # Save
-        resp = couch.process_and_post_to_dpla(data, ingestion_doc_id)
+        resp = couch.process_and_post_to_dpla(data, ingestion_doc)
         if resp == -1:
-            error_msg = "Error saving data from " + filename
+            error_msg = "Error saving records from " + filename
+            break
+        else:
+            print "Saved records from file " + filename
 
     if error_msg:
         status = "error"
@@ -75,7 +83,11 @@ def main(argv):
         "save_process/error": error_msg,
         "save_process/end_time": datetime.now().isoformat()
     }
-    couch._update_ingestion_doc(ingestion_doc, kwargs)
+    try:
+        couch._update_ingestion_doc(ingestion_doc, **kwargs)
+    except:
+        print "Error updating ingestion document " + ingestion_document_id
+        return -1
 
     return 0 if status == "complete" else -1
 

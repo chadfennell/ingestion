@@ -6,6 +6,8 @@ Usage:
     $ python fetch_records.py ingestion_document_id
 """
 import os
+import sys
+import uuid
 import argparse
 import tempfile
 from datetime import datetime
@@ -15,13 +17,7 @@ from dplaingestion.fetcher import create_fetcher
 from dplaingestion.selector import getprop
 
 def create_fetch_dir(provider):
-    return tempfile.mdktemp(provider)
-
-def create_subresources_json(subresources):
-    subresources_json = []
-    for subresource in subresources:
-        subresources_json.append({"title": subresource})
-    return json.dumps(subresources_json)
+    return tempfile.mkdtemp("_" + provider)
 
 def define_arguments():
     """Defines command line arguments for the current script"""
@@ -45,38 +41,45 @@ def main(argv):
         "fetch_process/data_dir": fetch_dir,
         "fetch_process/start_time": datetime.now().isoformat()
     }
-    couch._update_ingestion_doc(ingestion_doc, kwargs)
+    try:
+        couch._update_ingestion_doc(ingestion_doc, **kwargs)
+    except:
+        print "Error updating ingestion doc " + ingestion_document_id
+        return -1
 
     error_msg = []
-    fetcher = create_fetcher(ingestion_doc["profile_path"])
-    for response in fetcher.request_collections_and_records():
+    fetcher = create_fetcher(ingestion_doc["profile_path"],
+                             ingestion_doc["uri_base"])
+
+    print "Fetching records for " + fetcher.provider
+    for response in fetcher.fetch_all_data():
         if response["error"] is not None:
             error_msg.append(response["error"])
+            print "Error, " + response["error"]
         else:
             # Write records to file
-            filename = os.path.join(fetch_dir, hash(str(response["records"])))
+            filename = os.path.join(fetch_dir, str(uuid.uuid4()))
             with open(filename, "w") as f:
-                f.write(json.dumps(response["records"]))
-
-    # Write collections to file
-    if fetcher.subresources != "NotSupported":
-        h = hash(str(fetcher.subresources.keys()))
-        filename = os.path.join(fetch_dir, h)
-        with open(filename, "w") as f:
-            f.write(create_subresources_json())
+                f.write(json.dumps(response["data"]))
+            print "Records written to " + filename
 
     # Update ingestion document
-    try os.rmdir(fetch_dir):
+    try:
+        os.rmdir(fetch_dir)
         # Error if fetch_dir was empty
         status = "error"
     except:
         status = "complete"
     kwargs = {
-        "enrich_process/status": status,
-        "enrich_process/error": error_msg,
-        "enrich_process/end_time": datetime.now().isoformat()
+        "fetch_process/status": status,
+        "fetch_process/error": error_msg,
+        "fetch_process/end_time": datetime.now().isoformat()
     }
-    couch._update_ingestion_doc(ingestion_doc, kwargs)
+    try:
+        couch._update_ingestion_doc(ingestion_doc, **kwargs)
+    except:
+        print "Error updating ingestion doc " + ingestion_document_id
+        return -1
 
     return 0 if status == "complete" else -1
 
