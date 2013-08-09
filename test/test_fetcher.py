@@ -108,6 +108,8 @@ def test_absolute_url_fetcher_uva2():
         assert getprop(response, "data/records") is not None
         break
 
+# Exclude the MWDL test in Travis as access to the feed is restricted
+@attr(travis_exclude='yes')
 def test_absolute_url_fetcher_mwdl():
     profile_path = "profiles/mwdl.pjs"
     fetcher =  create_fetcher(profile_path, uri_base)
@@ -130,10 +132,6 @@ def test_all_oai_verb_fetchers():
             # Digital Commonwealth sets 217, 218 are giving errors
             if prof.get("name") == "digital-commonwealth":
                 fetcher.blacklist.extend(["217", "218"])
-
-            # Skip MWDL in Travis as access to the feed is restricted
-            if prof.get("name") == "mwdl" and "TRAVIS" in os.environ:
-                continue
 
             for response in fetcher.fetch_all_data():
                 assert response.get("error") is None
