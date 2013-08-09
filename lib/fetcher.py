@@ -161,8 +161,7 @@ class OAIVerbsFetcher(Fetcher):
         }
 
         if self.subresources == "NotSupported":
-            # In this case sets are not supported
-            self.subresources = ""
+            self.subresources = {"": None}
         else:
             # Fetch all sets
             response["error"], sets = self.list_sets()
@@ -184,6 +183,8 @@ class OAIVerbsFetcher(Fetcher):
         # Fetch all records for each subresource
         for subresource in self.subresources.keys():
             print "Fetching records for subresource " + subresource
+
+            # Set response["data"]["collection"]
             if not subresource == "":
                 setprop(response, "data/collection",
                         self.subresources[subresource])
@@ -381,7 +382,30 @@ class AbsoluteURLFetcher(Fetcher):
         return error, subresources
 
     def fetch_all_data(self):
-        response = {"error": None, "records": None}
+        """A generator to yeild batches of records along with the collection,
+           if any, the provider, and any errors encountered along the way. The
+           reponse dictionary has the following structure:
+
+            response = {
+                "error": <Any error encountered>,
+                "data": {
+                    "provider": <The provider>,
+                    "records": <The batch of records fetched>,
+                    "collection": {
+                        "title": <The collection title, if any>,
+                        "description": <The collection description, if any>
+                    }
+                }
+            }
+        """
+        response = {
+            "error": None,
+            "data": {
+                "provider": self.provider,
+                "records": None,
+                "collection": None
+            }
+        }
 
         if self.subresources == "NotSupported":
             self.subresources = {"": None}
@@ -394,6 +418,13 @@ class AbsoluteURLFetcher(Fetcher):
                 self.remove_blacklisted_subresources()
 
         for subresource in self.subresources.keys():
+            print "Fetching records for subresource " + subresource
+
+            # Set response["data"]["collection"]
+            if not subresource == "":
+                setprop(response, "data/collection",
+                        self.subresources[subresource])
+
             request_more = True
             if subresource:
                 url = self.endpoint_url.format(subresource)
@@ -422,7 +453,7 @@ class AbsoluteURLFetcher(Fetcher):
                     # NYPL records
                     if self.provider == "nypl":
                         params["page"] += 1
-                        (response["error"], response["records"],
+                        (response["error"], response["data"]["records"],
                          request_more) = self.nypl_request_records(content)
 
                         if response["error"] is not None:
@@ -435,14 +466,14 @@ class AbsoluteURLFetcher(Fetcher):
                         # UVA will not use the request_more flag
                         request_more = False
 
-                        for response["error"], response["records"] in \
+                        for response["error"], response["data"]["records"] in \
                             self.uva_request_records(content):
-                                yield response
+                            yield response
                     # MWDL records
                     elif self.provider == "mwdl":
-                        total_records, response["records"] = \
+                        total_records, response["data"]["records"] = \
                             self.mwdl_extract_records(content)
-                        params["indx"] += len(response["records"])
+                        params["indx"] += len(response["data"]["records"])
                         count += params["indx"]
                         if count >= total_records:
                             request_more = False

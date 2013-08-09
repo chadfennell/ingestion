@@ -330,7 +330,7 @@ def test_legacy():
     # Get last Clemson ingestion document
     ingest_doc = couch._get_last_ingestion_doc_for(PROVIDER)
     assert ingest_doc["ingestionSequence"] == 1
-    assert ingest_doc["countAdded"] == 244
+    assert ingest_doc["countAdded"] == 244 # 243 records plus 1 collection
     assert ingest_doc["countDeleted"] == 0
     assert ingest_doc["countChanged"] == 0
 
@@ -346,7 +346,7 @@ def test_legacy():
     assert ingest_doc["ingestionSequence"] == 2
     assert ingest_doc["countAdded"] == 0
     assert ingest_doc["countDeleted"] == 0
-    assert ingest_doc["countChanged"] == 244
+    assert ingest_doc["countChanged"] == 243 # The collection does not change
 
     # Get all provider documents in database
     docs = [doc for doc in couch._query_all_dpla_provider_docs(PROVIDER)]

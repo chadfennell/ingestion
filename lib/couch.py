@@ -467,7 +467,6 @@ class Couch(object):
         added_docs = []
         changed_docs = []
         for hid in harvested_docs:
-            self.logger.error(hid)
             # Add ingestonSequence to harvested document
             harvested_docs[hid]["ingestionSequence"] = ingestion_sequence
 

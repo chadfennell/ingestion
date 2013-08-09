@@ -8,6 +8,10 @@ from server_support import print_error_log
 from amara.thirdparty import json
 from amara.thirdparty import httplib2
 from dplaingestion.fetcher import create_fetcher
+from dplaingestion.selector import getprop as _getprop
+
+def getprop(obj, path):
+    return _getprop(obj, path, True)
 
 # TODO:
 # We should create our own data feed so as not to rely on a provider feed. 
@@ -31,32 +35,30 @@ def test_oai_fetcher_valid_subresource():
     fetcher.subresources = ["gmb"]
     for response in fetcher.fetch_all_data():
         assert response.get("error") is None
-        assert response.get("records") is not None
+        assert getprop(response, "data/records") is not None
 
     assert fetcher.subresources.keys() == ["gmb"]
 
 def test_oai_fetcher_invalid_subresource():
     profile_path = "profiles/clemson.pjs"
     fetcher = create_fetcher(profile_path, uri_base)
-    fetcher.uri_base = uri_base
     assert fetcher.__class__.__name__ == "OAIVerbsFetcher"
 
     fetcher.subresources = ["banana"]
     for response in fetcher.fetch_all_data():
         assert response.get("error") is not None
-        assert response.get("records") is None
+        assert getprop(response, "data/records") is None
 
     assert fetcher.subresources.keys() == []
 
 def test_oai_fetcher_all_subresources():
     profile_path = "profiles/clemson.pjs"
     fetcher = create_fetcher(profile_path, uri_base)
-    fetcher.uri_base = uri_base
     assert fetcher.__class__.__name__ == "OAIVerbsFetcher"
 
     for response in fetcher.fetch_all_data():
         assert response.get("error") is None
-        assert response.get("records") is not None
+        assert getprop(response, "data/records") is not None
 
     diff = [subresource for subresource in scdl_all_subresources if
             subresource not in fetcher.subresources]
@@ -65,7 +67,6 @@ def test_oai_fetcher_all_subresources():
 def test_oai_fetcher_with_blacklist():
     profile_path = "profiles/clemson.pjs"
     fetcher = create_fetcher(profile_path, uri_base)
-    fetcher.uri_base = uri_base
     assert fetcher.__class__.__name__ == "OAIVerbsFetcher"
 
     fetcher.blacklist = scdl_blacklist
@@ -80,21 +81,19 @@ def test_oai_fetcher_with_blacklist():
 def test_absolute_url_fetcher_nypl():
     profile_path = "profiles/nypl.pjs"
     fetcher =  create_fetcher(profile_path, uri_base)
-    fetcher.uri_base = uri_base
     assert fetcher.__class__.__name__ == "AbsoluteURLFetcher"
 
     count = 0
     for response in fetcher.fetch_all_data():
         count += 1
         assert response.get("error") is None
-        assert response.get("records") is not None
+        assert getprop(response, "data/records") is not None
         if count == 5:
             break
 
 def test_absolute_url_fetcher_uva1():
     profile_path = "profiles/virginia.pjs"
     fetcher =  create_fetcher(profile_path, uri_base)
-    fetcher.uri_base = uri_base
     assert fetcher.__class__.__name__ == "AbsoluteURLFetcher"
 
     count = 0
@@ -102,21 +101,20 @@ def test_absolute_url_fetcher_uva1():
         count += 1
         print response.get("error")
         assert response.get("error") is None
-        assert response.get("records") is not None
+        assert getprop(response, "data/records") is not None
         if count == 5:
             break
 
 def test_absolute_url_fetcher_uva2():
     profile_path = "profiles/virginia_books.pjs"
     fetcher =  create_fetcher(profile_path, uri_base)
-    fetcher.uri_base = uri_base
     assert fetcher.__class__.__name__ == "AbsoluteURLFetcher"
 
     count = 0
     for response in fetcher.fetch_all_data():
         count += 1
         assert response.get("error") is None
-        assert response.get("records") is not None
+        assert getprop(response, "data/records") is not None
         if count == 5:
             break
 
@@ -128,17 +126,16 @@ def test_all_oai_verb_fetchers():
         if prof.get("type") == "oai_verbs":
             print profile_path
             fetcher =  create_fetcher(profile_path, uri_base)
-            fetcher.uri_base = uri_base
             assert fetcher.__class__.__name__ == "OAIVerbsFetcher"
 
-            # Digital Commonwealth set 218 is giving errors
+            # Digital Commonwealth sets 217, 218 are giving errors
             if prof.get("name") == "digital-commonwealth":
-                fetcher.blacklist.append("218")
+                fetcher.blacklist.extend(["217", "218"])
 
             for response in fetcher.fetch_all_data():
                 print response.get("error")
                 assert response.get("error") is None
-                assert response.get("records") is not None
+                assert getprop(response, "data/records") is not None
                 break
 
 def test_all_absolute_url_fetchers():
@@ -149,13 +146,12 @@ def test_all_absolute_url_fetchers():
         if prof.get("type") == "absolute_url":
             print profile_path
             fetcher =  create_fetcher(profile_path, uri_base)
-            fetcher.uri_base = uri_base
             assert fetcher.__class__.__name__ == "AbsoluteURLFetcher"
 
             for response in fetcher.fetch_all_data():
                 print response.get("error")
                 assert response.get("error") is None
-                assert response.get("records") is not None
+                assert getprop(response, "data/records") is not None
                 break
 
 def test_all_file_fetchers():

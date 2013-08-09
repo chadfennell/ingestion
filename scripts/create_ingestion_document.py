@@ -43,7 +43,7 @@ def main(argv):
        getprop(latest_ingestion_doc, "delete_process/status") != "complete":
         # Last ingestion did not complete
         print "Error, last ingestion did not complete"
-        return -1
+        return None
 
     ingestion_document_id = couch._create_ingestion_document(provider,
                                                              uri_base,
