@@ -131,6 +131,10 @@ def test_all_oai_verb_fetchers():
             if prof.get("name") == "digital-commonwealth":
                 fetcher.blacklist.extend(["217", "218"])
 
+            # Skip MWDL in Travis as access to the feed is restricted
+            if prof.get("name") == "mwdl" and "TRAVIS" in os.environ:
+                continue
+
             for response in fetcher.fetch_all_data():
                 assert response.get("error") is None
                 assert getprop(response, "data/records") is not None
