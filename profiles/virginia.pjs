@@ -1,10 +1,14 @@
 {
     "name": "virginia",
-    "type": "absolute_url",
+    "type": "uva",
     "endpoint_url": "http://fedoraproxy.lib.virginia.edu/fedora/objects/uva-lib%3A{0}/methods/uva-lib%3AmetsSDef/getMETS",
     "subresources": {
-        "744806": "Negatives from the Charlottesville photographic studio plus an index volume ca. 1890-1938. Holsinger Studio Collection.",
-        "817985": "University of Virginia Visual History Collection ca. 1825-present. University of Virginia Online Visual History."
+        "744806": {
+            "title": "Negatives from the Charlottesville photographic studio plus an index volume ca. 1890-1938. Holsinger Studio Collection."
+        },
+        "817985": {
+            "title": "University of Virginia Visual History Collection ca. 1825-present. University of Virginia Online Visual History."
+        }
     },
     "contributor": {
         "@id": "http://dp.la/api/contributor/virginia",

@@ -83,15 +83,38 @@ class OAIVerbsFetcher(Fetcher):
     def __init__(self, profile, uri_base):
         super(OAIVerbsFetcher, self).__init__(profile, uri_base)
 
+    def set_subresources(self):
+        """Sets self.subresources
+
+           Returns the error, else None
+        """
+        if self.subresources == "NotSupported":
+            self.subresources = {"": None}
+        else:
+            # Fetch all sets
+            error, sets = self.list_sets()
+            if error is not None:
+                self.subresources = {}
+                return error
+            elif sets:
+                if not self.subresources:
+                    self.subresources = sets
+                    self.remove_blacklisted_subresources()
+                else:
+                    for set in sets.keys():
+                        if set not in self.subresources:
+                            del sets[set]
+                    self.subresources = sets
+
     def list_sets(self):
         """Requests all sets via the ListSets verb
 
-           Returns an (error, content) tuple where error is None if the
+           Returns an (error, sets) tuple where error is None if the
            request succeeds, the requested content is not empty and is
-           parseable, and content is a dictionary with setSpec as keys and
+           parseable, and sets is a dictionary with setSpec as keys and
            a dictionary with keys title and description as the values.
         """
-        subresources = {}
+        sets = {}
         list_sets_url = self.uri_base + "/oai.listsets.json?endpoint=" + \
                         self.endpoint_url
 
@@ -104,19 +127,25 @@ class OAIVerbsFetcher(Fetcher):
                 return error, subresources
 
             for s in list_sets_content:
-                set = s["setSpec"]
-                subresources[set] = {"id": set}
-                subresources[set]["title"] = s["setName"]
-                if "setDescription" in set:
-                    subresources[set]["description"] = s["setDescription"]
+                spec = s["setSpec"]
+                sets[spec] = {"id": spec}
+                sets[spec]["title"] = s["setName"]
+                if "setDescription" in s:
+                    sets[spec]["description"] = s["setDescription"]
 
-            if not subresources:
+            if not sets:
                 error = "No sets received from URL %s" % list_sets_url
 
-        return error, subresources
+        return error, sets
 
     def list_records(self, url, params):
-        records = None
+        """Requests records via the ListRecords verb
+
+           Returns an (error, records_content) tuple where error is None if the
+           request succeeds, the requested content is not empty and is
+           parseable, and records is a dictionary with key "items".
+        """
+        records_content = {}
         list_records_url = self.uri_base + "/dpla-list-records?endpoint=" + url
 
         error, content = self.request_content_from(list_records_url, params)
@@ -126,7 +155,6 @@ class OAIVerbsFetcher(Fetcher):
             except ValueError:
                 error = "Error decoding content from URL %s with params %s" % \
                         (list_records_url, params)
-                return
 
             if not records_content.get("items"):
                 error = "No records received from URL %s with params %s" % \
@@ -160,25 +188,10 @@ class OAIVerbsFetcher(Fetcher):
             }
         }
 
-        if self.subresources == "NotSupported":
-            self.subresources = {"": None}
-        else:
-            # Fetch all sets
-            response["error"], sets = self.list_sets()
-            if response["error"] is not None:
-                self.subresources = {}
-                yield response
-
-            # Set the subresources
-            if sets:
-                if not self.subresources:
-                    self.subresources = sets
-                    self.remove_blacklisted_subresources()
-                else:
-                    for set in sets.keys():
-                        if set not in self.subresources:
-                            del sets[set]
-                    self.subresources = sets
+        # Set the subresources
+        response["error"] = self.set_subresources()
+        if response["error"] is not None:
+            yield response
 
         # Fetch all records for each subresource
         for subresource in self.subresources.keys():
@@ -228,16 +241,161 @@ class AbsoluteURLFetcher(Fetcher):
         self.endpoint_url_params = profile.get("endpoint_url_params")
         super(AbsoluteURLFetcher, self).__init__(profile, uri_base)
 
-    # NYPL-specific methods
-    def nypl_request_subresources(self):
+    def extract_ARC_content(self, content, url):
+        error = None
+        try:
+            content = ARC_PARSE(content)
+        except:
+            error = "Error parsing content from URL %s" % url
+
+        return error, content
+
+    def set_subresources(self):
+        """Sets self.subresources
+           Overriden in child classes
+
+           Returns the error, else None
+        """
+        if isinstance(self.subresources, dict):
+            subresources = {}
+            for k, v in self.subresources.items():
+                subresources[k] = {
+                    "id": k,
+                    "title": v.get("title"),
+                    "description": v.get("description")
+                }
+            self.subresources = subresources
+        elif self.subresources == "NotSupported":
+            self.subresources = {"": None}
+        else:
+            self.subresources = {}
+            error = "If subresources are not supported then the " + \
+                    "subresources field in the profile must be set to " + \
+                    "\"NotSupported\""
+            return error
+
+    def request_records(self):
+        # Implemented in child classes
+        pass
+
+    def fetch_all_data(self):
+        """A generator to yeild batches of records along with the collection,
+           if any, the provider, and any errors encountered along the way. The
+           reponse dictionary has the following structure:
+
+            response = {
+                "error": <Any error encountered>,
+                "data": {
+                    "provider": <The provider>,
+                    "records": <The batch of records fetched>,
+                    "collection": {
+                        "title": <The collection title, if any>,
+                        "description": <The collection description, if any>
+                    }
+                }
+            }
+        """
+        response = {
+            "error": None,
+            "data": {
+                "provider": self.provider,
+                "records": None,
+                "collection": None
+            }
+        }
+
+        # Set the subresources
+        response["error"] = self.set_subresources()
+        if response["error"] is not None:
+            yield response
+
+        # Request records for each subresource
+        for subresource in self.subresources.keys():
+            print "Fetching records for subresource " + subresource
+
+            # Set response["data"]["collection"]
+            if not subresource == "":
+                setprop(response, "data/collection",
+                        self.subresources[subresource])
+
+            request_more = True
+            if subresource:
+                url = self.endpoint_url.format(subresource)
+            else:
+                url = self.endpoint_url
+            params = self.endpoint_url_params
+
+            while request_more:
+                response["error"], content = self.request_content_from(
+                    url, self.endpoint_url_params
+                    )
+
+                if response["error"] is not None:
+                    # Stop requesting from this subresource
+                    request_more = False
+                    yield response
+                    continue
+
+                response["error"], content = self.extract_ARC_content(content,
+                                                                      url)
+                if response["error"] is not None:
+                    request_more = False
+                    yield response
+                else:
+                    for response["error"], response["data"]["records"], \
+                        request_more in self.request_records(content):
+                        yield response
+
+class MWDLFetcher(AbsoluteURLFetcher):
+    def __init__(self, profile, uri_base):
+        self.count = 0
+        super(MWDLFetcher, self).__init__(profile, uri_base)
+
+    def mwdl_extract_records(self, content):
+        error = None
+        total_records = getprop(content,
+                                "SEGMENTS/JAGROOT/RESULT/DOCSET/TOTALHITS")
+        records = getprop(content, "SEGMENTS/JAGROOT/RESULT/DOCSET/DOC")
+
+        if records:
+            records = iterify(records)
+            for record in records:
+                record["_id"] = getprop(record,
+                                        "PrimoNMBib/record/control/recordid")
+        else:
+            error = "No records found in MWDL content"
+
+        return error, total_records, records
+
+    def request_records(self, content):
+        request_more = True
+        error, total_records, records = self.mwdl_extract_records(content)
+        self.endpoint_url_params["indx"] += len(records)
+        self.count += self.endpoint_url_params["indx"]
+        if self.count >= total_records:
+            request_more = False
+
+        yield error, records, request_more
+
+class NYPLFetcher(AbsoluteURLFetcher):
+    def __init__(self, profile, uri_base):
+        super(NYPLFetcher, self).__init__(profile, uri_base)
+
+    def set_subresources(self):
+        """Sets self.subresources
+
+           Returns the error, else None
+        """
+        self.subresources ={}
+
         url = self.get_sets_url
         error, content = self.request_content_from(url)
         if error is not None:
-            return error, content
+            return error
 
         error, content = self.extract_ARC_content(content, url)
         if error is not None:
-            return error, content
+            return error
 
         subresources = {}
         for item in content["response"]:
@@ -249,10 +407,11 @@ class AbsoluteURLFetcher(Fetcher):
 
         if not subresources:
             error = "Error, no subresources from URL %s" % url
+            return error
 
-        return error, subresources
+        self.subresources = subresources
 
-    def nypl_extract_ARC_content(self, content, url):
+    def extract_ARC_content(self, content, url):
         error = None
         try:
             parsed_content = ARC_PARSE(content)
@@ -270,7 +429,8 @@ class AbsoluteURLFetcher(Fetcher):
                     url
         return error, content
 
-    def nypl_request_records(self, content):
+    def request_records(self, content):
+        self.endpoint_url_params["page"] += 1
         error = None
         total_pages = getprop(content, "request/totalPages")
         current_page = getprop(content, "request/page")
@@ -291,17 +451,13 @@ class AbsoluteURLFetcher(Fetcher):
                 records.append(record)
 
             if error is not None:
-                return error, content, request_more
+                yield error, content, request_more
 
-        return error, content, request_more
+        yield error, content, request_more
 
-    # UVA-specific methods
-    def uva_request_subresources(self):
-        """Creates the subresources dictionary from self.collection_titles
-        """
-        subresources = self.collection_titles
-        return None, subresources
-
+class UVAFetcher(AbsoluteURLFetcher):
+    def __init__(self, profile, uri_base):
+        super(UVAFetcher, self).__init__(profile, uri_base)
 
     def uva_extract_records(self, content, url):
         error = None
@@ -345,139 +501,12 @@ class AbsoluteURLFetcher(Fetcher):
                                     self.uva_extract_records(cont, url):
                                     yield error, recs
 
-    # MWDL-specific methods
-    def mwdl_extract_records(self, content):
-        total_records = getprop(content,
-                                "SEGMENTS/JAGROOT/RESULT/DOCSET/TOTALHITS")
-        records = getprop(content, "SEGMENTS/JAGROOT/RESULT/DOCSET/DOC")
+    def request_records(self, content):
+        # UVA will not use the request_more flag
+        request_more = False
 
-        records = iterify(records)
-        for record in records:
-            record["_id"] = getprop(record, "PrimoNMBib/record/control/recordid")
-
-        return total_records, records
-
-    # Non provider-specific methods
-    def extract_ARC_content(self, content, url):
-        if self.provider == "nypl":
-            return self.nypl_extract_ARC_content(content, url)
-        else:
-            error = None
-            try:
-                content = ARC_PARSE(content)
-            except:
-                error = "Error parsing content from URL %s" % url
-
-            return error, content
-
-    def request_subresources(self):
-        if self.provider == "nypl":
-            error, subresources = self.nypl_request_subresources()
-        elif self.provider.startswith("virginia"):
-            error, subresources = self.uva_request_subresources()
-        else:
-            error = "Error, provider does not support subresources"
-            subresources = []
-
-        return error, subresources
-
-    def fetch_all_data(self):
-        """A generator to yeild batches of records along with the collection,
-           if any, the provider, and any errors encountered along the way. The
-           reponse dictionary has the following structure:
-
-            response = {
-                "error": <Any error encountered>,
-                "data": {
-                    "provider": <The provider>,
-                    "records": <The batch of records fetched>,
-                    "collection": {
-                        "title": <The collection title, if any>,
-                        "description": <The collection description, if any>
-                    }
-                }
-            }
-        """
-        response = {
-            "error": None,
-            "data": {
-                "provider": self.provider,
-                "records": None,
-                "collection": None
-            }
-        }
-
-        if self.subresources == "NotSupported":
-            self.subresources = {"": None}
-        elif not self.subresources:
-            response["error"], self.subresources = self.request_subresources()
-            if response["error"] is not None:
-                self.subresources = {}
-                yield response
-            else:
-                self.remove_blacklisted_subresources()
-
-        for subresource in self.subresources.keys():
-            print "Fetching records for subresource " + subresource
-
-            # Set response["data"]["collection"]
-            if not subresource == "":
-                setprop(response, "data/collection",
-                        self.subresources[subresource])
-
-            request_more = True
-            if subresource:
-                url = self.endpoint_url.format(subresource)
-            else:
-                url = self.endpoint_url
-            params = self.endpoint_url_params
-
-            count = 0 # To be used by MWDL
-            while request_more:
-                response["error"], content = self.request_content_from(url,
-                                                                       params)
-
-                if response["error"] is not None:
-                    # Stop requesting from this subresource
-                    request_more = False
-                    yield response
-                    continue
-
-                response["error"], content = self.extract_ARC_content(content,
-                                                                      url)
-                if response["error"] is not None:
-                    request_more = False
-                    yield response
-                    continue
-                else:
-                    # NYPL records
-                    if self.provider == "nypl":
-                        params["page"] += 1
-                        (response["error"], response["data"]["records"],
-                         request_more) = self.nypl_request_records(content)
-
-                        if response["error"] is not None:
-                            yield response
-                            continue
-                        else:
-                            yield response
-                    # UVA records
-                    elif self.provider.startswith("virginia"):
-                        # UVA will not use the request_more flag
-                        request_more = False
-
-                        for response["error"], response["data"]["records"] in \
-                            self.uva_request_records(content):
-                            yield response
-                    # MWDL records
-                    elif self.provider == "mwdl":
-                        total_records, response["data"]["records"] = \
-                            self.mwdl_extract_records(content)
-                        params["indx"] += len(response["data"]["records"])
-                        count += params["indx"]
-                        if count >= total_records:
-                            request_more = False
-                        yield response
+        for error, records in self.uva_request_records(content):
+            yield error, records, request_more
 
 class FileFetcher(Fetcher):
     def __init__(self, profile, uri_base):
@@ -486,9 +515,12 @@ class FileFetcher(Fetcher):
 def create_fetcher(profile_path, uri_base):
     fetcher_types = {
         'file': lambda p, u: FileFetcher(p, u),
+        'uva': lambda p, u: UVAFetcher(p, u),
+        'mwdl': lambda p, u: MWDLFetcher(p, u),
+        'nypl': lambda p, u: NYPLFetcher(p, u),
         'oai_verbs': lambda p, u: OAIVerbsFetcher(p, u),
-        'absolute_url': lambda p, u: AbsoluteURLFetcher(p, u),
     }
+
 
     with open(profile_path, "r") as f:
         profile = json.load(f)

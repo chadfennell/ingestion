@@ -1,6 +1,6 @@
 {
     "name": "nypl",
-    "type": "absolute_url",
+    "type": "nypl",
     "endpoint_url": "http://j2k.repo.nypl.org/api/v1/items/{0}",
     "get_sets_url": "http://j2k.repo.nypl.org/api/v1/items/listCollections",
     "get_records_url": "http://j2k.repo.nypl.org/api/v1/items/mods/{0}",

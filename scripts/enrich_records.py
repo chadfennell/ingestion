@@ -2,6 +2,13 @@
 """
 Script to enrich data from JSON files
 
+Expected JSON structure:
+{
+    "provider": <The provider name>,
+    "records": <A list of records>,
+    "collection": <An empty string or a dictionary>
+}
+
 Usage:
     $ python enrich_records.py ingestion_document_id
 """
@@ -63,39 +70,36 @@ def main(argv):
         "Pipeline-Coll": ",".join(profile["enrichments_coll"])
     }
 
-    error_msg = []
+    error_msg = None
     fetch_dir = getprop(ingestion_doc, "fetch_process/data_dir")
     
-    print "Enriching records for " + ingestion_doc["provider"]
     for filename in os.listdir(fetch_dir):
         filepath = os.path.join(fetch_dir, filename)
         with open(filepath, "r") as f:
             try:
                 data = json.loads(f.read())
             except:
-                error_msg.append("Error loading " + filepath)
-                continue
+                error_msg = "Error loading " + filepath
+                break
 
         # Enrich
-        print "Enriching file " + filename
+        print "Enriching file " + filepath
         enrich_path = ingestion_doc["uri_base"] + "/enrich"
         resp, content = H.request(enrich_path, "POST", body=json.dumps(data),
                                   headers=headers)
         if not resp["status"].startswith("2"):
-            error_msg.append("Error (status %s) enriching data from %s" %
-                             (resp["status"], filepath))
-            continue
+            error_msg = "Error (status %s) enriching data from %s" % \
+                        (resp["status"], filepath)
+            break
 
         # Write enriched data to file
         with open(os.path.join(enrich_dir, filename), "w") as f:
             f.write(content)
 
     # Update ingestion document
-    try:
-        os.rmdir(enrich_dir)
-        # Error if enrich_dir was empty
+    if error_msg is not None:
         status = "error"
-    except:
+    else:
         status = "complete"
     kwargs = {
         "enrich_process/status": status,

@@ -94,13 +94,6 @@ def enrich(body, ctype):
     """
     Establishes a pipeline of services identified by an ordered list of URIs
     provided in two request headers, one for collections and one for records.
-
-    Expected JSON is of the form:
-    {
-        "provider": <The provider name>,
-        "records": <A list of records>,
-        "collection": <An empty string or a dictionary>
-    }
     """
     request_headers = copy_headers_to_dict(request.environ)
     rec_enrichments = request_headers.get(u'Pipeline-Rec', '').split(',')
@@ -115,8 +108,8 @@ def enrich(body, ctype):
         coll_id = collection.get('id')
         desc = collection.get('description')
         title = collection.get('title')
-        COLLECTIONS[id] = enrich_coll(ctype, provider, coll_id,
-                                      coll_enrichments, title, desc)
+        COLLECTIONS[coll_id] = enrich_coll(ctype, provider, coll_id,
+                                           coll_enrichments, title, desc)
 
     docs = {}
     for record in data['records']:
