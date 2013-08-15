@@ -31,7 +31,7 @@ def iterify(iterable):
         iterable = [iterable]
     return iterable
 
-ARC_PARSE = lambda doc: xmltodict.parse(doc, xml_attribs=True, attr_prefix='',
+XML_PARSE = lambda doc: xmltodict.parse(doc, xml_attribs=True, attr_prefix='',
                                         force_cdata=False,
                                         ignore_whitespace_cdata=True)
 
@@ -243,10 +243,10 @@ class AbsoluteURLFetcher(Fetcher):
         self.endpoint_url_params = profile.get("endpoint_url_params")
         super(AbsoluteURLFetcher, self).__init__(profile, uri_base)
 
-    def extract_ARC_content(self, content, url):
+    def extract_xml_content(self, content, url):
         error = None
         try:
-            content = ARC_PARSE(content)
+            content = XML_PARSE(content)
         except:
             error = "Error parsing content from URL %s" % url
 
@@ -340,7 +340,7 @@ class AbsoluteURLFetcher(Fetcher):
                     yield response
                     continue
 
-                response["error"], content = self.extract_ARC_content(content,
+                response["error"], content = self.extract_xml_content(content,
                                                                       url)
                 if response["error"] is not None:
                     request_more = False
@@ -397,7 +397,7 @@ class NYPLFetcher(AbsoluteURLFetcher):
         if error is not None:
             return error
 
-        error, content = self.extract_ARC_content(content, url)
+        error, content = self.extract_xml_content(content, url)
         if error is not None:
             return error
 
@@ -415,10 +415,10 @@ class NYPLFetcher(AbsoluteURLFetcher):
 
         self.subresources = subresources
 
-    def extract_ARC_content(self, content, url):
+    def extract_xml_content(self, content, url):
         error = None
         try:
-            parsed_content = ARC_PARSE(content)
+            parsed_content = XML_PARSE(content)
         except:
             error = "Error parsing content from URL %s" % url
             return error, content
@@ -445,7 +445,7 @@ class NYPLFetcher(AbsoluteURLFetcher):
             record_url = self.get_records_url.format(item["uuid"])
             error, content = self.request_content_from(record_url)
             if error is None:
-                error, content = self.extract_ARC_content(content, record_url)
+                error, content = self.extract_xml_content(content, record_url)
 
             if error is None:
                 record = getprop(content, "response/mods")
@@ -497,7 +497,7 @@ class UVAFetcher(AbsoluteURLFetcher):
                         if error is not None:
                             yield error, cont
                         else:
-                            error, cont = self.extract_ARC_content(cont, url)
+                            error, cont = self.extract_xml_content(cont, url)
                             if error is not None:
                                 yield error, cont
                             else:
