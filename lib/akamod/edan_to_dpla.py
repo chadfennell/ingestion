@@ -583,6 +583,7 @@ AGGREGATION_TRANSFORMER = {
     "originalRecord"        : lambda d: {"originalRecord": d.get("originalRecord",None)},
     "ingestType"            : lambda d: {"ingestType": d.get("ingestType")},
     "ingestDate"            : lambda d: {"ingestDate": d.get("ingestDate")},
+    "provider"              : lambda d: {"provider": d.get("provider")}
 }
 
 @simple_service("POST", "http://purl.org/la/dp/edan_to_dpla", "edan_to_dpla", "application/ld+json")
@@ -626,13 +627,6 @@ def edantodpla(body,ctype,geoprop=None):
     out.update(transform_is_shown_at(data))
     out.update(transform_object(data))
     out.update(transform_data_provider(data))
-
-    # Additional content not from original document
-    if "HTTP_CONTRIBUTOR" in request.environ:
-        try:
-            out["provider"] = json.loads(base64.b64decode(request.environ["HTTP_CONTRIBUTOR"]))
-        except Exception as e:
-            logger.debug("Unable to decode Contributor header value: "+request.environ["HTTP_CONTRIBUTOR"]+"---"+repr(e))
 
     # Strip out keys with None/null values?
     out = dict((k,v) for (k,v) in out.items() if v)

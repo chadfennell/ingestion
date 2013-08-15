@@ -5,6 +5,7 @@ Script to enrich data from JSON files
 Expected JSON structure:
 {
     "provider": <The provider name>,
+    "contributor": <A dictionary containing the contributor @id and name>,
     "records": <A list of records>,
     "collection": <An empty string or a dictionary>
 }

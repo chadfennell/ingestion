@@ -102,6 +102,7 @@ def enrich(body, ctype):
     data = json.loads(body)
     provider = data['provider']
     collection = data['collection']
+    contributor = data['contributor']
 
     # Enrich collection first
     if collection:
@@ -115,6 +116,11 @@ def enrich(body, ctype):
     for record in data['records']:
         # Preserve record prior to any enrichments
         record['originalRecord'] = record.copy()         
+
+        # Set ingestType, provider, and ingestDate
+        record[u'ingestType'] = 'item'
+        record[u'provider'] = contributor
+        set_ingested_date(record)
 
         # Add collection(s)
         record[u'collection'] = []
@@ -135,8 +141,6 @@ def enrich(body, ctype):
         elif collection:
             record[u'collection'] = COLLECTIONS[coll_id]
 
-        record[u'ingestType'] = 'item'
-        set_ingested_date(record)
 
         doc_text = pipe(record, ctype, rec_enrichments, 'HTTP_PIPELINE_REC')
         doc = json.loads(doc_text)

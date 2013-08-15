@@ -171,6 +171,7 @@ class OAIVerbsFetcher(Fetcher):
                 "error": <Any error encountered>,
                 "data": {
                     "provider": <The provider>,
+                    "contributor": <The contributor>,
                     "records": <The batch of records fetched>,
                     "collection": {
                         "title": <The collection title, if any>,
@@ -183,6 +184,7 @@ class OAIVerbsFetcher(Fetcher):
             "error": None,
             "data": {
                 "provider": self.provider,
+                "contributor": self.contributor,
                 "records": None,
                 "collection": None
             }
@@ -287,6 +289,7 @@ class AbsoluteURLFetcher(Fetcher):
                 "error": <Any error encountered>,
                 "data": {
                     "provider": <The provider>,
+                    "contributor": <The contributor>,
                     "records": <The batch of records fetched>,
                     "collection": {
                         "title": <The collection title, if any>,
@@ -299,6 +302,7 @@ class AbsoluteURLFetcher(Fetcher):
             "error": None,
             "data": {
                 "provider": self.provider,
+                "contributor": self.contributor,
                 "records": None,
                 "collection": None
             }
