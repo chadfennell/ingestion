@@ -1,6 +1,10 @@
 {
     "provider": "clemson",
     "collection": "",
+    "contributor": {
+        "@id": "http://dp.la/api/contributor/scdl-clemson",
+        "name": "South Carolina Digital Library"
+    },
     "records": [
         {
             "publisher": [
