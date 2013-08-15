@@ -139,8 +139,9 @@ def enrich(body, ctype):
             if len(record[u'collection']) == 1:
                 record[u'collection'] = record[u'collection'][0]
         elif collection:
-            record[u'collection'] = COLLECTIONS[coll_id]
-
+            record[u'collection'] = create_record_collection(
+                                        COLLECTIONS[coll_id]
+                                        )
 
         doc_text = pipe(record, ctype, rec_enrichments, 'HTTP_PIPELINE_REC')
         doc = json.loads(doc_text)
