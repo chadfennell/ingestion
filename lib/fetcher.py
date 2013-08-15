@@ -440,7 +440,7 @@ class NYPLFetcher(AbsoluteURLFetcher):
         error = None
         total_pages = getprop(content, "request/totalPages")
         current_page = getprop(content, "request/page")
-        request_more = total_pages == current_page
+        request_more = total_pages != current_page
 
         records = []
         for item in getprop(content, "response/capture"):
