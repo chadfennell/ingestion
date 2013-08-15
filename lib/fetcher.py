@@ -452,7 +452,8 @@ class NYPLFetcher(AbsoluteURLFetcher):
             if error is None:
                 record = getprop(content, "response/mods")
                 record["_id"] = item["uuid"]
-                record["tmp_image_id"] = item.get("itemLink")
+                record["tmp_image_id"] = item.get("imageID")
+                record["tmp_item_link"] = item.get("itemLink")
                 record["tmp_high_res_link"] = item.get("highResLink")
                 records.append(record)
 
