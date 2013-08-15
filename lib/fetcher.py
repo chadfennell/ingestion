@@ -406,8 +406,10 @@ class NYPLFetcher(AbsoluteURLFetcher):
             if item == "collection":
                 for coll in content["response"][item]:
                     if "uuid" in coll:
-                        subresources[coll["uuid"]] = {}
-                        subresources[coll["uuid"]]["title"] = coll["title"]
+                        subresources[coll["uuid"]] = {
+                            "id": coll["uuid"],
+                            "title": coll["title"]
+                        }
 
         if not subresources:
             error = "Error, no subresources from URL %s" % url
@@ -455,9 +457,9 @@ class NYPLFetcher(AbsoluteURLFetcher):
                 records.append(record)
 
             if error is not None:
-                yield error, content, request_more
+                yield error, records, request_more
 
-        yield error, content, request_more
+        yield error, records, request_more
 
 class UVAFetcher(AbsoluteURLFetcher):
     def __init__(self, profile, uri_base):
