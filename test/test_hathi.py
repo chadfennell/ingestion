@@ -65,7 +65,7 @@ def test_get_subject_values_tag_658():
     tag = "658"
 
     values = _get_subject_values(_SUBJECT, tag)
-    assert values == ["A:B[C]--D. E. V. X. Y. Z"]
+    assert values == ["A:B [C]--D. E. V. X. Y. Z"]
 
 def test_get_subject_values_tag_69x():
     for tag in range(690, 700):

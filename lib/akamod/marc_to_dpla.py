@@ -259,7 +259,7 @@ def _get_subject_values(_dict, tag):
             if code == "b":
                 return [":"]
             elif code == "c":
-                return ["[", "]"]
+                return [" [", "]"]
             elif code == "d":
                 return ["--"]
         elif ((code in ("v", "x", "y", "z")) or
