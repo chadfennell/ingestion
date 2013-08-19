@@ -44,12 +44,6 @@ def test_get_values3():
     values = _get_values(_DICT, codes)
     assert values == ["B", "D"]
 
-def test_get_subject_values_tag_651():
-    tag = "651"
-
-    values = _get_subject_values(_SUBJECT, tag)
-    assert values == ["B. C, D. E--V--X--Y--Z"]
-
 def test_get_subject_values_tag_653():
     tag = "653"
 
