@@ -384,8 +384,8 @@ def all_transform(d, p):
         lambda t: t == "242":           [("title", 1, None)],
         lambda t: t == "245":           [("title", 0, "!c")],
         lambda t: t == "970":           [("type", "a")],
-        lambda t: t == "651":           [("subject", None), ("spatial", "a")],
-        lambda t: int(t) in set([600, 650] +
+        lambda t: t == "651":           [("spatial", "a")],
+        lambda t: int(t) in set([600, 650, 651] +
                             range(610, 620) +
                             range(653, 659) +
                             range(690, 700)):   [("subject", None),
