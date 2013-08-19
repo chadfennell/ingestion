@@ -265,13 +265,13 @@ def test_unset_prop6():
 
     INPUT = {
         "_id": "12345",
-        "dataProvider": "University of Minnesota",
+        "dataProvider": ["Hathitrust", "University of Minnesota"],
         "sourceResource": {
             "type": "image"
         }
     }
     EXPECTED = {
-        "dataProvider": "University of Minnesota",
+        "dataProvider": ["Hathitrust", "University of Minnesota"],
         "sourceResource": {
             "type": "image"
         }

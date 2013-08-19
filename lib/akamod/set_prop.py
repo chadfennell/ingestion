@@ -56,7 +56,7 @@ def unset_prop(body, ctype, prop=None, condition=None, condition_prop=None):
         "is_digit": lambda v: v[0].isdigit(),
         "mwdl_exclude": lambda v: (v[0] == "collections" or
                                    v[0] == "findingAids"),
-        "hathi_exclude": lambda v: (v[0] == "University of Minnesota" and
+        "hathi_exclude": lambda v: ("University of Minnesota" in v[0] and
                                     v[1] == "image")
     }
 
