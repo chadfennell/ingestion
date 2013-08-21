@@ -8,6 +8,7 @@ Usage:
 import os
 import sys
 import argparse
+from akara import logger
 from datetime import datetime
 from amara.thirdparty import json
 from dplaingestion.couch import Couch
@@ -42,10 +43,11 @@ def main(argv):
         print "Error updating ingestion document " + ingestion_document_id
         return -1
 
-    resp = couch.process_deleted_docs(ingestion_doc)
+    resp, total_deleted = couch.process_deleted_docs(ingestion_doc)
+    logger.info("Total documents deleted: %s" % total_deleted)
     if resp == -1:
         status = "error"
-        error_msg = "Error deleting documents"
+        error_msg = "Error deleting documents; only %s deleted" % total_deleted
     else:
         status = "complete"
         error_msg = None

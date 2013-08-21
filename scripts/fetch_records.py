@@ -10,6 +10,7 @@ import sys
 import uuid
 import argparse
 import tempfile
+from akara import logger
 from datetime import datetime
 from amara.thirdparty import json
 from dplaingestion.couch import Couch
@@ -44,7 +45,8 @@ def main(argv):
     try:
         couch.update_ingestion_doc(ingestion_doc, **kwargs)
     except:
-        print "Error updating ingestion doc " + ingestion_document_id
+        logger.error("Error updating ingestion doc %s in %s" %
+                     (ingestion_document_id, __name__))
         return -1
 
     error_msg = []
@@ -52,22 +54,29 @@ def main(argv):
                              ingestion_doc["uri_base"])
 
     print "Fetching records for " + fetcher.provider
+    total_fetched_records = 0
     for response in fetcher.fetch_all_data():
         if response["error"] is not None:
             error_msg.append(response["error"])
-            print "Error, " + response["error"]
+            logger.error(response["error"])
+            print response["error"]
         else:
             # Write records to file
             filename = os.path.join(fetch_dir, str(uuid.uuid4()))
             with open(filename, "w") as f:
                 f.write(json.dumps(response["data"]))
             print "Records written to " + filename
+            total_fetched_records += len(getprop(response, "data/records"))
+
+    logger.info("Total records fetched: %s" % total_fetched_records)
 
     # Update ingestion document
     try:
         os.rmdir(fetch_dir)
         # Error if fetch_dir was empty
         status = "error"
+        error_msg = "Error, no records fetched"
+        logger.error(error_msg)
     except:
         status = "complete"
     kwargs = {
@@ -78,7 +87,8 @@ def main(argv):
     try:
         couch.update_ingestion_doc(ingestion_doc, **kwargs)
     except:
-        print "Error updating ingestion doc " + ingestion_document_id
+        logger.error("Error updating ingestion doc %s in %s" %
+                     (ingestion_document_id, __name__))
         return -1
 
     return 0 if status == "complete" else -1

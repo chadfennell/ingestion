@@ -17,6 +17,7 @@ import os
 import sys
 import tempfile
 import argparse
+from akara import logger
 from datetime import datetime
 from amara.thirdparty import json
 from amara.thirdparty import httplib2
@@ -74,6 +75,7 @@ def main(argv):
     error_msg = None
     fetch_dir = getprop(ingestion_doc, "fetch_process/data_dir")
     
+    total_enriched_records = 0
     for filename in os.listdir(fetch_dir):
         filepath = os.path.join(fetch_dir, filename)
         with open(filepath, "r") as f:
@@ -93,9 +95,15 @@ def main(argv):
                         (resp["status"], filepath)
             break
 
+        data = json.loads(content)
+        enriched_records = data["enriched_records"]
+        total_enriched_records += data["enriched_records_count"]
+
         # Write enriched data to file
         with open(os.path.join(enrich_dir, filename), "w") as f:
-            f.write(content)
+            f.write(json.dumps(enriched_records))
+
+    logger.info("Total records enriched: %s" % total_enriched_records)
 
     # Update ingestion document
     if error_msg is not None:

@@ -392,7 +392,11 @@ class Couch(object):
            previous ingestion's ingestionSequence, adds the deleted document id
            to the dashboard database, and updates the current ingestion
            document's countDeleted.
+
+           Returns a status (-1 for error, 0 for success) along with the total
+           number of documents deleted.
         """
+        total_deleted = 0
         if not ingestion_doc["ingestionSequence"] == 1:
             provider = ingestion_doc["provider"]
             curr_seq = int(ingestion_doc["ingestionSequence"])
@@ -416,7 +420,7 @@ class Couch(object):
                         self._bulk_post_to(self.dashboard_db, dashboard_docs)
                     except:
                         print >> sys.stderr, "Error posting to dashboard db"
-                        return -1
+                        return (-1, total_deleted)
                     self._update_ingestion_doc_counts(
                         ingestion_doc, countDeleted=len(delete_docs)
                         )
@@ -424,7 +428,8 @@ class Couch(object):
                         self._delete_documents(self.dpla_db, delete_docs)
                     except:
                         print >> sys.stderr, "Error deleting from dpla db"
-                        return -1
+                        return (-1, total_deleted)
+                    total_deleted += len(delete_docs)
                     delete_docs = []
                     dashboard_docs = []
 
@@ -434,7 +439,7 @@ class Couch(object):
                     self._bulk_post_to(self.dashboard_db, dashboard_docs)
                 except:
                     print >> sys.stderr, "Error posting to dashboard db"
-                    return -1
+                    return (-1, total_deleted)
                 self._update_ingestion_doc_counts(
                     ingestion_doc, countDeleted=len(delete_docs)
                     )
@@ -442,7 +447,9 @@ class Couch(object):
                     self._delete_documents(self.dpla_db, delete_docs)
                 except:
                     print >> sys.stderr, "Error deleting from dpla db"
-                    return -1
+                    return (-1, total_deleted)
+                total_deleted += len(delete_docs)
+        return (0, total_deleted)
 
     def process_and_post_to_dpla(self, harvested_docs, ingestion_doc):
         """Processes the harvested documents by:

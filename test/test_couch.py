@@ -100,7 +100,8 @@ class CouchTest(Couch):
         url = server() + "enrich"
         body = json.dumps(content)
         resp, content = H.request(url, "POST", body=body, headers=headers)
-        docs = json.loads(content)
+        data = json.loads(content)
+        docs = data["enriched_records"]
         self._back_up_data(ingestion_doc)
         self.process_and_post_to_dpla(docs, ingestion_doc)
         self.process_deleted_docs(ingestion_doc)

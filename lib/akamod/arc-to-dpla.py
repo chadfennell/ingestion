@@ -325,9 +325,6 @@ def arctodpla(body,ctype,geoprop=None):
     out.update(has_view_transform(data))
     out["sourceResource"].update(transform_state_located_in(data))
 
-    if exists(out, "sourceResource/date"):
-        logger.debug("OUTTYPE: %s"%getprop(out, "sourceResource/date"))
-
     if exists(data, "objects/object"):
         out.update(transform_thumbnail(data))
 

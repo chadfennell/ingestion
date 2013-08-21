@@ -12,6 +12,7 @@ import fetch_records
 import enrich_records
 import save_records
 import remove_deleted_records
+from amara.thirdparty import json
 
 def define_arguments():
     """Defines command line arguments for the current script"""

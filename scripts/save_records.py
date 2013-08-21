@@ -8,6 +8,7 @@ Usage:
 import os
 import sys
 import argparse
+from akara import logger
 from datetime import datetime
 from amara.thirdparty import json
 from dplaingestion.couch import Couch
@@ -57,6 +58,7 @@ def main(argv):
 
     error_msg = None
     enrich_dir = getprop(ingestion_doc, "enrich_process/data_dir")
+    total_saved_documents = 0
     for file in os.listdir(enrich_dir):
         filename = os.path.join(enrich_dir, file)
         with open(filename, "r") as f:
@@ -71,7 +73,11 @@ def main(argv):
         if resp == -1:
             break
         else:
-            print "Saved records from file " + filename
+            total_saved_documents += len(data)
+            print "Saved documents from file " + filename
+
+    logger.info("Total documents saved: %s (*includes duplicate collections)" %
+                total_saved_documents)
 
     if error_msg:
         status = "error"

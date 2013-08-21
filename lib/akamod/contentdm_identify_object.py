@@ -17,21 +17,12 @@ def contentdm_identify_object(body, ctype, download="True"):
     should expect to the find the thumbnail
     """
 
-    LOG_JSON_ON_ERROR = True
-
-    def log_json():
-        if LOG_JSON_ON_ERROR:
-            logger.debug(body)
-
-    data = {}
     try:
         data = json.loads(body)
-    except Exception as e:
-        msg = "Bad JSON: " + e.args[0]
-        logger.error(msg)
+    except:
         response.code = 500
         response.add_header('content-type', 'text/plain')
-        return msg
+        return "Unable to parse body as JSON"
 
     handle_field = "originalRecord/handle"
     if exists(data, handle_field):
@@ -45,22 +36,19 @@ def contentdm_identify_object(body, ctype, download="True"):
             logger.error("There is no URL in %s." % handle_field)
             return body
     else:
-        msg = "Field %s does not exist" % handle_field
-        logger.error(msg)
+        logger.error("Field %s does not exist" % handle_field)
         return body
 
     p = url.split("u?")
 
     if len(p) != 2:
         logger.error("Bad URL %s. It should have just one 'u?' part." % url)
-        log_json()
         return body
 
     (base_url, rest) = p
 
     if base_url == "" or rest == "":
         logger.error("Bad URL: %s. There is no 'u?' part." % url)
-        log_json()
         return body
 
     p = rest.split(",")
@@ -68,7 +56,6 @@ def contentdm_identify_object(body, ctype, download="True"):
     if len(p) != 2:
         logger.error("Bad URL %s. Expected two parts at the end, used in " +
             "thumbnail URL for CISOROOT and CISOPTR." % url)
-        log_json()
         return body
 
     # Thumb url field.

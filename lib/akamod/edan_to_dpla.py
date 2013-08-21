@@ -313,7 +313,7 @@ def transform_online_media(d):
     try:
         c = int(c)
     except ValueError as e:
-        logger.error("Couldn't convert %s to int" % c)
+        logger.error("Couldn't convert %s to int in %s" % (c, __name__))
         return {}
     if not "media" in media:
         return {}

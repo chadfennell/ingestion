@@ -1,10 +1,11 @@
 from akara.services import simple_service
 from akara import request, response
-from akara import module_config, logger
+from akara import module_config
 from akara.util import copy_headers_to_dict
 from amara.thirdparty import json, httplib2
 from amara.lib.iri import join, is_absolute
 from urllib import quote, urlencode, quote_plus
+from akara import logger
 import datetime
 import uuid
 import base64
@@ -94,6 +95,9 @@ def enrich(body, ctype):
     """
     Establishes a pipeline of services identified by an ordered list of URIs
     provided in two request headers, one for collections and one for records.
+
+    Returns a JSON dump of the collections and records enriched along with a
+    count of records enriched.
     """
     request_headers = copy_headers_to_dict(request.environ)
     rec_enrichments = request_headers.get(u'Pipeline-Rec', '').split(',')
@@ -148,16 +152,26 @@ def enrich(body, ctype):
         # After pipe doc must have _id and sourceResource
         if doc.get("_id", None):
             if "sourceResource" in doc:
+                logger.debug("Enriched record %s" % doc["_id"])
                 docs[doc["_id"]] = doc
             else:
-                logger.error("Document does not have sourceResource: %s" %
-                             doc["_id"])
+                logger.error("Document %s does not have sourceResource: %s" %
+                             (doc["_id"], doc))
+        else:
+            logger.error("Document does not have an _id: %s" % doc)
+
+    enriched_records_count =  len(docs)
 
     # Add collections to docs
     for collection in COLLECTIONS.values():
         docs[collection["_id"]] = collection
 
-    return json.dumps(docs)
+    data = {
+        "enriched_records": docs,
+        "enriched_records_count": enriched_records_count
+    }
+
+    return json.dumps(data)
 
 @simple_service('POST', 'http://purl.org/la/dp/enrich_storage', 'enrich_storage', 'application/json')
 def enrich_storage(body, ctype):

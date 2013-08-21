@@ -8,6 +8,7 @@ Usage:
 import sys
 import argparse
 import ConfigParser
+from akara import logger
 from amara.thirdparty import json
 from dplaingestion.couch import Couch
 from dplaingestion.selector import getprop
@@ -33,21 +34,25 @@ def main(argv):
         try:
             profile = json.load(f)
         except:
-            # TODO: Handle JSON load exception
-            pass
+            print "Error, could not load profile in %s" % __name__
+            return None
     provider = profile["name"]
 
     couch = Couch()
     latest_ingestion_doc = couch._get_last_ingestion_doc_for(provider)
     if latest_ingestion_doc and \
        getprop(latest_ingestion_doc, "delete_process/status") != "complete":
-        # Last ingestion did not complete
-        print "Error, last ingestion did not complete"
+        error_msg = "Error, last ingestion did not complete. Review " + \
+                    "dashboard document %s for errors." % \
+                    latest_ingestion_doc["id"]
+        logger.error(error_msg)
+        print error_msg
         return None
 
     ingestion_document_id = couch._create_ingestion_document(provider,
                                                              uri_base,
                                                              args.profile_path)
+    logger.debug("Ingestion document %s created." % ingestion_document_id)
 
     return ingestion_document_id
 
