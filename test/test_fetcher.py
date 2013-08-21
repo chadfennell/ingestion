@@ -123,21 +123,23 @@ def test_absolute_url_fetcher_mwdl():
 
 def test_all_oai_verb_fetchers():
     for profile in os.listdir("profiles"):
-        profile_path = "profiles/" + profile
-        with open(profile_path, "r") as f:
-            prof = json.loads(f.read())
-        if prof.get("type") == "oai_verbs":
-            fetcher =  create_fetcher(profile_path, uri_base)
-            assert fetcher.__class__.__name__ == "OAIVerbsFetcher"
+        if profile.endswith(".pjs"):
+            profile_path = "profiles/" + profile
+            print >> sys.stderr, profile_path
+            with open(profile_path, "r") as f:
+                prof = json.loads(f.read())
+            if prof.get("type") == "oai_verbs":
+                fetcher =  create_fetcher(profile_path, uri_base)
+                assert fetcher.__class__.__name__ == "OAIVerbsFetcher"
 
-            # Digital Commonwealth sets 217, 218 are giving errors
-            if prof.get("name") == "digital-commonwealth":
-                fetcher.blacklist.extend(["217", "218"])
+                # Digital Commonwealth sets 217, 218 are giving errors
+                if prof.get("name") == "digital-commonwealth":
+                    fetcher.blacklist.extend(["217", "218"])
 
-            for response in fetcher.fetch_all_data():
-                assert response.get("error") is None
-                assert getprop(response, "data/records") is not None
-                break
+                for response in fetcher.fetch_all_data():
+                    assert response.get("error") is None
+                    assert getprop(response, "data/records") is not None
+                    break
 
 def test_all_file_fetchers():
     pass
