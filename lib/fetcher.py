@@ -66,6 +66,7 @@ class Fetcher(object):
                 url += "?" + urlencode(params)
 
         for i in range(attempts):
+            logger.debug("Request %s to %s" % (i + 1, url))
             resp, content = self.http_handle.request(url)
             # Break if 2xx response status
             if resp["status"].startswith("2"):
@@ -81,6 +82,7 @@ class Fetcher(object):
 
 class OAIVerbsFetcher(Fetcher):
     def __init__(self, profile, uri_base):
+        self.metadata_prefix = profile.get("metadata_prefix")
         super(OAIVerbsFetcher, self).__init__(profile, uri_base)
 
     def set_subresources(self):
@@ -207,16 +209,17 @@ class OAIVerbsFetcher(Fetcher):
             request_more = True
             resumption_token = ""
             url = self.endpoint_url
+
+            # Set the inital parameters
             params = {"oaiset": subresource}
+            if self.metadata_prefix is not None:
+                params["metadataPrefix"] = self.metadata_prefix
 
             # Flag to remove subresource if no records fetched
             remove_subresource = True
 
             # Request records until a resumption token is not received
             while request_more:
-                if resumption_token:
-                    params["resumption_token"] = resumption_token
-                
                 # Send request
                 response["error"], content = self.list_records(url, params)
 
@@ -228,8 +231,12 @@ class OAIVerbsFetcher(Fetcher):
                     remove_subresource = False
                     setprop(response, "data/records", content["items"])
                     resumption_token = content.get("resumption_token")
-                    request_more = (resumption_token is not None and
-                                    len(resumption_token) > 0)
+                    if (resumption_token is not None and
+                        len(resumption_token) > 0):
+                        # Override the parameters with the resumption token
+                        params = {"resumption_token": resumption_token}
+                    else:
+                        request_more = False
 
                 yield response
 

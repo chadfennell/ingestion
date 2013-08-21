@@ -3,6 +3,7 @@ import sys
 import ConfigParser
 from nose import with_setup
 from nose.tools import nottest
+from nose.plugins.attrib import attr
 from server_support import server
 from server_support import print_error_log
 from amara.thirdparty import json

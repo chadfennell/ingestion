@@ -1,6 +1,7 @@
 {
     "name": "harvard",
     "type": "oai_verbs",
+    "metadata_prefix": "mods",
     "endpoint_url": "http://vcoai.lib.harvard.edu/vcoai/vc",
     "subresources": [
         "dag",

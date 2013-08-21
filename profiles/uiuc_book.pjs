@@ -1,6 +1,7 @@
 {
     "name": "uiuc", 
     "type": "oai_verbs",
+    "metadata_prefix": "marc",
     "endpoint_url": "http://ratri.grainger.illinois.edu/oca-oaiprovider/oai.asp",
     "subresources": [
         "UC",
